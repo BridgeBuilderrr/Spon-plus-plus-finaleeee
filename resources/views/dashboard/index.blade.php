@@ -7,22 +7,16 @@
     </div>
 
     <div class="row">
-        <div class="col-md-4 mb-4">
+        <div class="col-md-6 mb-4">
             <div class="card p-4 text-center">
-                <div class="display-6 fw-bold text-primary mb-2">0</div>
-                <div class="text-muted small">Enrolled Courses</div>
+                <div class="display-6 fw-bold text-primary mb-2">{{ auth()->user()->classrooms()->wherePivot('role', 'member')->count() }}</div>
+                <div class="text-muted small">Classes Joined</div>
             </div>
         </div>
-        <div class="col-md-4 mb-4">
+        <div class="col-md-6 mb-4">
             <div class="card p-4 text-center">
-                <div class="display-6 fw-bold text-success mb-2">0</div>
-                <div class="text-muted small">Completed Tasks</div>
-            </div>
-        </div>
-        <div class="col-md-4 mb-4">
-            <div class="card p-4 text-center">
-                <div class="display-6 fw-bold text-info mb-2">0</div>
-                <div class="text-muted small">Pending Quizzes</div>
+                <div class="display-6 fw-bold text-success mb-2">{{ auth()->user()->classrooms()->wherePivot('role', 'teacher')->count() }}</div>
+                <div class="text-muted small">Classes Teaching</div>
             </div>
         </div>
     </div>
@@ -41,10 +35,6 @@
             <tr>
                 <td class="text-muted pb-3">Email Address</td>
                 <td class="fw-bold pb-3">{{ auth()->user()->email }}</td>
-            </tr>
-            <tr>
-                <td class="text-muted pb-3">Role</td>
-                <td class="fw-bold pb-3"><span class="badge bg-primary rounded-pill px-3">{{ ucfirst(auth()->user()->role) }}</span></td>
             </tr>
         </table>
     </div>
