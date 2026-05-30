@@ -33,11 +33,17 @@ class ClassroomBannerController extends Controller
         ]);
 
         if ($classroom->banner_path) {
-            Storage::disk('public')->delete($classroom->banner_path);
+            $oldPath = public_path($classroom->banner_path);
+            if (file_exists($oldPath)) {
+                unlink($oldPath);
+            }
         }
 
-        $path = $request->file('banner')->store('banners', 'public');
-        $classroom->update(['banner_path' => $path]);
+        $file = $request->file('banner');
+        $fileName = time() . '_' . $file->getClientOriginalName();
+        $file->move(public_path('uploads/banners'), $fileName);
+        
+        $classroom->update(['banner_path' => 'uploads/banners/' . $fileName]);
 
         return back()->with('success', 'Banner updated.');
     }
@@ -47,7 +53,10 @@ class ClassroomBannerController extends Controller
         $this->authorizeTeacher($classroom);
 
         if ($classroom->banner_path) {
-            Storage::disk('public')->delete($classroom->banner_path);
+            $oldPath = public_path($classroom->banner_path);
+            if (file_exists($oldPath)) {
+                unlink($oldPath);
+            }
         }
 
         $classroom->update(['banner_path' => null]);

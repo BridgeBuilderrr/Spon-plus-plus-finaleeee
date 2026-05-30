@@ -2,25 +2,21 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
+use App\Models\Tag;
 
 class TagSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
     public function run(): void
     {
         $tags = [
-            'Math', 'Science', 'History', 'Programming', 'AI', 'Business',
-            'Marketing', 'Design', 'English', 'Finance', 'Cybersecurity',
-            'Data Science', 'Leadership', 'Productivity', 'Psychology',
-            'Physics', 'Chemistry', 'Biology', 'Web Development',
-            'Machine Learning', 'Cloud Computing', 'UI/UX', 'Mobile Development',
-            'Photography', 'Music', 'Entrepreneurship', 'Communication',
-            'Research', 'Project Management', 'Language Learning',
+            'Mathematics', 'Science', 'English', 'History', 'Art', 
+            'Music', 'Computer Science', 'Physics', 'Chemistry', 
+            'Biology', 'Language', 'Geography'
         ];
-        foreach ($tags as $tag) \App\Models\Tag::firstOrCreate(['name' => $tag]);
+
+        foreach ($tags as $tagName) {
+            Tag::firstOrCreate(['name' => $tagName]);
+        }
     }
 }

@@ -15,7 +15,7 @@ class ClassroomController extends Controller
 {
     public function index()
     {
-        $classrooms = Auth::user()->classrooms()->with('tags')->get();
+        $classrooms = Auth::user()->classrooms()->with('tags')->paginate(10);
         $allTags = \App\Models\Tag::orderBy('name')->get();
         return view('classrooms.index', compact('classrooms', 'allTags'));
     }

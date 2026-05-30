@@ -1,9 +1,65 @@
 @extends('layouts.app')
 
 @push('head')
-    <script src="https://cdn.ckeditor.com/ckeditor5/41.4.2/classic/ckeditor.js"></script>
     <style>
-        .ck-editor__editable { min-height: 200px; }
+        /* Dropzone Global Styles */
+        .dropzone {
+            border: 2px dashed var(--border) !important;
+            background: rgba(var(--primary-rgb, 118, 75, 162), 0.05) !important;
+            border-radius: 1rem !important;
+            min-height: 120px !important;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem !important;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+        .dropzone:hover {
+            border-color: var(--primary) !important;
+            background: rgba(var(--primary-rgb, 118, 75, 162), 0.1) !important;
+        }
+        .dropzone .dz-message {
+            margin: 0 !important;
+        }
+        .dropzone .dz-preview {
+            margin: 5px !important;
+        }
+        .dropzone .dz-preview .dz-image {
+            width: 80px !important;
+            height: 80px !important;
+            border-radius: 0.5rem !important;
+        }
+        /* Banner Dropzone Styles */
+        .banner-upload-overlay {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            z-index: 10;
+        }
+        .banner-dz-area {
+            background: rgba(255, 255, 255, 0.9);
+            border: 2px dashed #cbd5e1;
+            padding: 8px 16px;
+            border-radius: 50px;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            transition: all 0.2s;
+            color: #475569;
+        }
+        .banner-dz-area:hover {
+            background: #fff;
+            border-color: var(--primary);
+            color: var(--primary);
+            transform: scale(1.05);
+        }
+        [data-theme="dark"] .banner-dz-area {
+            background: rgba(30, 41, 59, 0.8);
+            border-color: #475569;
+            color: #f1f5f9;
+        }
     </style>
 @endpush
 
@@ -11,24 +67,29 @@
     <!-- Classroom Banner -->
     <div class="classroom-banner">
         @if($classroom->banner_path)
-            <img src="{{ Storage::url($classroom->banner_path) }}?v={{ time() }}" alt="Class Banner" class="classroom-banner__img">
+            <img src="{{ asset($classroom->banner_path) }}?v={{ time() }}" alt="Class Banner" class="classroom-banner__img">
         @else
-            <div class="classroom-banner__placeholder">
-                <span>{{ $classroom->name }}</span>
+            <div class="classroom-banner__placeholder classroom-thumb-gradient">
+                <div class="banner-text">
+                    <h2 class="m-0 fw-bold">{{ $classroom->name }}</h2>
+                    <p class="m-0 opacity-75 small">Level up your learning with Spon++</p>
+                </div>
             </div>
         @endif
 
         @if($userRole === 'teacher')
-            <div class="classroom-banner__actions">
-                <form method="POST" action="{{ route('classrooms.banner.update', $classroom) }}" enctype="multipart/form-data" class="d-inline">
+            <div class="banner-upload-overlay">
+                <form action="{{ route('classrooms.banner.update', $classroom) }}" method="POST" enctype="multipart/form-data" id="banner-dropzone-form">
                     @csrf
-                    <label class="btn-banner-upload d-inline-flex align-items-center gap-2" title="Change banner" style="cursor:pointer">
-                        <i data-lucide="image" style="width:14px;height:14px"></i> Change Banner
-                        <input type="file" name="banner" id="banner-input" accept="image/png,image/jpeg,image/webp" style="display:none" onchange="this.form.submit()">
-                    </label>
+                    <div id="banner-dropzone" class="banner-dz-area" title="Drag and drop or click to change banner">
+                        <i data-lucide="camera" class="mb-1" style="width:24px;height:24px"></i>
+                        <span class="smaller fw-bold">Change Banner</span>
+                    </div>
                 </form>
+            </div>
 
-                @if($classroom->banner_path)
+            @if($classroom->banner_path)
+                <div class="classroom-banner__actions">
                     <form method="POST" action="{{ route('classrooms.banner.destroy', $classroom) }}" class="d-inline">
                         @csrf
                         @method('DELETE')
@@ -36,8 +97,8 @@
                             <i data-lucide="trash-2" style="width:14px;height:14px"></i> Remove
                         </button>
                     </form>
-                @endif
-            </div>
+                </div>
+            @endif
         @endif
     </div>
 
@@ -93,7 +154,16 @@
             </div>
         </div>
         <p class="text-muted mt-3 mb-2">{{ $classroom->description }}</p>
-        <div class="small text-muted">Created by: <span class="fw-bold text-main">{{ $creator->name ?? 'Unknown' }}</span></div>
+        <div class="small text-muted d-flex align-items-center flex-wrap gap-2">
+            <span>Created by: <span class="fw-bold text-main">{{ $creator->name ?? 'Unknown' }}</span> • {{ $classroom->created_at->format('d M Y') }}</span>
+            <div class="d-flex flex-wrap gap-1 ms-1">
+                @foreach($classroom->tags as $tag)
+                    <span class="badge rounded-pill px-2 py-1" style="font-size: 0.65rem; background: rgba(var(--primary-rgb, 118, 75, 162), 0.1); color: var(--primary); border: 1px solid rgba(var(--primary-rgb, 118, 75, 162), 0.2);">
+                        {{ $tag->name }}
+                    </span>
+                @endforeach
+            </div>
+        </div>
     </div>
 
 
@@ -411,7 +481,7 @@
                         </div>
                         <div class="modal-body">
                             <!-- Type Tabs (Inside Modal) -->
-                            <div class="d-flex gap-2 mb-4 p-1 bg-light rounded-pill" style="width: fit-content; margin: 0 auto;">
+                            <div class="d-flex gap-2 mb-4 p-1 bg-sidebar-hover-responsive rounded-pill" style="width: fit-content; margin: 0 auto;">
                                 <button type="button" class="btn btn-sm rounded-pill px-4 type-tab active" onclick="setPostType('announcement', this)">Announcement</button>
                                 <button type="button" class="btn btn-sm rounded-pill px-4 type-tab" onclick="setPostType('material', this)">Material</button>
                                 <button type="button" class="btn btn-sm rounded-pill px-4 type-tab" onclick="setPostType('assignment', this)">Assignment</button>
@@ -440,24 +510,14 @@
 
                             <div id="file_field" class="mb-3 d-none">
                                 <label class="form-label text-muted smaller fw-bold">ATTACHMENT (OPTIONAL)</label>
-                                <div class="choose-file-area">
-                                    <label class="choose-file-trigger d-flex align-items-center gap-3 p-3 border rounded-3 bg-light-subtle pointer">
-                                        <input type="file" name="file" class="choose-file-input" style="display:none" accept=".pdf,.docx,.xlsx,.pptx,.txt,.zip,.rar,.png,.jpg,.jpeg,.drawio">
-                                        <div class="bg-primary-subtle rounded-circle d-flex align-items-center justify-content-center" style="width:42px;height:42px">
-                                            <i data-lucide="paperclip" class="text-primary" style="width:20px;height:20px"></i>
-                                        </div>
-                                        <div class="flex-grow-1">
-                                            <div class="fw-bold small text-main">Choose a file to upload</div>
-                                            <div class="text-muted smaller">Max 20MB (PDF, DOCX, Images, etc.)</div>
-                                        </div>
-                                        <div class="btn btn-primary btn-sm rounded-pill px-3">Browse</div>
-                                    </label>
-                                    <div class="choose-file-preview d-none mt-2 d-flex align-items-center gap-2 p-2 rounded-3 bg-primary-subtle border-primary-subtle">
-                                        <i data-lucide="file-text" class="text-primary" style="width:16px;height:16px"></i>
-                                        <span class="file-name text-primary small fw-bold text-truncate" style="max-width: 200px;"></span>
-                                        <button type="button" class="btn-close ms-auto remove-file" style="padding: 0.5rem;"></button>
+                                <div id="activity-dropzone" class="dropzone">
+                                    <div class="dz-message d-flex flex-column align-items-center">
+                                        <i data-lucide="upload" class="text-primary mb-2" style="width:32px;height:32px"></i>
+                                        <span class="fw-bold small text-main">Choose a file to upload</span>
+                                        <span class="text-muted smaller">Max 20MB (PDF, DOCX, Images, etc.)</span>
                                     </div>
                                 </div>
+                                <input type="file" name="file" id="file-input-activity" style="display:none">
                             </div>
                         </div>
                         <div class="modal-footer border-0 justify-content-end">
@@ -504,25 +564,15 @@
 
 
                                     <div class="mb-3">
-                                        <label class="form-label text-muted smaller fw-bold">REPLACE ATTACHMENT</label>
-                                        <div class="choose-file-area">
-                                            <label class="choose-file-trigger d-flex align-items-center gap-3 p-3 border rounded-3 bg-light-subtle pointer">
-                                                <input type="file" name="file" class="choose-file-input" style="display:none" accept=".pdf,.docx,.xlsx,.pptx,.txt,.zip,.rar,.png,.jpg,.jpeg,.drawio">
-                                                <div class="bg-primary-subtle rounded-circle d-flex align-items-center justify-content-center" style="width:42px;height:42px">
-                                                    <i data-lucide="paperclip" class="text-primary" style="width:20px;height:20px"></i>
-                                                </div>
-                                                <div class="flex-grow-1">
-                                                    <div class="fw-bold small text-main">Choose a new file</div>
-                                                    <div class="text-muted smaller">Max 20MB</div>
-                                                </div>
-                                                <div class="btn btn-primary btn-sm rounded-pill px-3">Browse</div>
-                                            </label>
-                                            <div class="choose-file-preview d-none mt-2 d-flex align-items-center gap-2 p-2 rounded-3 bg-primary-subtle border-primary-subtle">
-                                                <i data-lucide="file-text" class="text-primary" style="width:16px;height:16px"></i>
-                                                <span class="file-name text-primary small fw-bold text-truncate" style="max-width: 200px;"></span>
-                                                <button type="button" class="btn-close ms-auto remove-file" style="padding: 0.5rem;"></button>
+                                        <label class="form-label text-muted smaller fw-bold">REPLACE ATTACHMENT (OPTIONAL)</label>
+                                        <div id="edit-dropzone-{{ $item->id }}" class="dropzone">
+                                            <div class="dz-message d-flex flex-column align-items-center">
+                                                <i data-lucide="upload-cloud" class="text-primary mb-2" style="width:32px;height:32px"></i>
+                                                <span class="fw-bold small text-main">Drop file here or click to upload</span>
+                                                <span class="text-muted smaller">Max 20MB</span>
                                             </div>
                                         </div>
+                                        <input type="file" name="file" id="file-input-edit-{{ $item->id }}" style="display:none">
                                     </div>
                                 </div>
                                 <div class="modal-footer border-0 justify-content-end">
@@ -592,30 +642,20 @@
                     </div>
                     <div class="modal-body">
                         <div class="mb-3">
-                            <label class="form-label text-muted smaller fw-bold">UPLOAD FILE</label>
-                            <div class="choose-file-area">
-                                <label class="choose-file-trigger d-flex align-items-center gap-3 p-3 border rounded-3 bg-light-subtle pointer">
-                                    <input type="file" name="file" class="choose-file-input" style="display:none" accept=".pdf,.docx,.xlsx,.pptx,.txt,.zip,.rar,.png,.jpg,.jpeg,.drawio" required>
-                                    <div class="bg-primary-subtle rounded-circle d-flex align-items-center justify-content-center" style="width:42px;height:42px">
-                                        <i data-lucide="upload" class="text-primary" style="width:20px;height:20px"></i>
-                                    </div>
-                                    <div class="flex-grow-1">
-                                        <div class="fw-bold small text-main">Select assignment file</div>
-                                        <div class="text-muted smaller">Max 20MB</div>
-                                    </div>
-                                    <div class="btn btn-primary btn-sm rounded-pill px-3">Browse</div>
-                                </label>
-                                <div class="choose-file-preview d-none mt-2 d-flex align-items-center gap-2 p-2 rounded-3 bg-primary-subtle border-primary-subtle">
-                                    <i data-lucide="file-check" class="text-primary" style="width:16px;height:16px"></i>
-                                    <span class="file-name text-primary small fw-bold text-truncate" style="max-width: 200px;"></span>
-                                    <button type="button" class="btn-close ms-auto remove-file" style="padding: 0.5rem;"></button>
+                            <label class="form-label text-muted smaller fw-bold">YOUR SUBMISSION</label>
+                            <div id="submission-dropzone" class="dropzone">
+                                <div class="dz-message d-flex flex-column align-items-center">
+                                    <i data-lucide="file-up" class="text-primary mb-2" style="width:32px;height:32px"></i>
+                                    <span class="fw-bold small text-main">Drop work file here or click to upload</span>
+                                    <span class="text-muted smaller">Max 20MB (PDF, DOCX, ZIP, etc.)</span>
                                 </div>
                             </div>
+                            <input type="file" name="file" id="file-input-submission" style="display:none">
                         </div>
                     </div>
                     <div class="modal-footer border-0 justify-content-end">
                         <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Cancel</button>
-                        <button type="submit" class="btn btn-primary rounded-pill px-4">Submit Now</button>
+                        <button type="submit" class="btn btn-primary rounded-pill px-4">Submit Assignment</button>
                     </div>
                 </form>
             </div>
@@ -626,6 +666,10 @@
         <style>
             .text-main { color: var(--text); }
             [data-theme="dark"] .text-main { color: #f8fafc; }
+
+            .bg-sidebar-hover-responsive { background-color: rgba(0,0,0,0.05); }
+            [data-theme="dark"] .bg-sidebar-hover-responsive { background-color: rgba(255,255,255,0.05); }
+            [data-theme="dark"] .bg-light-subtle { background-color: rgba(255,255,255,0.03) !important; }
             
             .breadcrumb-nav { font-size: 0.8rem; display: flex; gap: 8px; margin-bottom: 8px; }
             .breadcrumb-nav a { 
@@ -642,12 +686,36 @@
             [data-theme="dark"] .breadcrumb-nav a { color: #a78bfa; }
             [data-theme="dark"] .breadcrumb-nav a:hover { color: #c4b5fd; }
 
-            .classroom-banner { position: relative; width: 100%; border-radius: 12px; overflow: hidden; margin-bottom: 20px; }
-            .classroom-banner__img { width: 100%; height: 180px; object-fit: cover; }
-            .classroom-banner__placeholder { width: 100%; height: 180px; background: linear-gradient(135deg, #667eea, #764ba2); display: flex; align-items: center; justify-content: center; color: white; font-size: 2rem; font-weight: bold; }
-            .classroom-banner__actions { position: absolute; bottom: 12px; right: 12px; display: flex; gap: 8px; }
-            .btn-banner-upload, .btn-banner-delete { background: rgba(0,0,0,0.6); color: white; border: none; border-radius: 8px; padding: 6px 12px; font-size: 0.8rem; cursor: pointer; backdrop-filter: blur(4px); }
-            .btn-banner-upload:hover, .btn-banner-delete:hover { background: rgba(0,0,0,0.8); }
+            .classroom-banner {
+                height: 240px;
+                background: var(--card);
+                border-radius: 20px;
+                overflow: hidden;
+                position: relative;
+                margin-bottom: 24px;
+                border: 1px solid var(--border);
+            }
+            .classroom-banner__img { width: 100%; height: 100%; object-fit: cover; }
+            .classroom-banner__placeholder { 
+                width: 100%; height: 100%; 
+                display: flex; align-items: flex-end; padding: 40px;
+            }
+            .classroom-thumb-gradient {
+                background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+            }
+            .banner-text { color: white; text-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+            
+            .classroom-banner__actions {
+                position: absolute; bottom: 20px; right: 20px;
+                display: flex; gap: 10px;
+            }
+            .btn-banner-upload, .btn-banner-delete {
+                background: rgba(0,0,0,0.6); color: white; border: none;
+                padding: 8px 16px; border-radius: 8px; font-size: 0.85rem;
+                font-weight: 600; backdrop-filter: blur(4px); transition: 0.2s;
+                text-decoration: none;
+            }
+            .btn-banner-upload:hover, .btn-banner-delete:hover { background: rgba(0,0,0,0.8); transform: translateY(-1px); color: white; }
 
             .stream-item { transition: transform 0.2s, box-shadow 0.2s; position: relative; }
             .stream-item.dragging { opacity: 0.5; }
@@ -726,7 +794,6 @@
             .choose-file-trigger.drag-over { 
                 border-color: var(--primary) !important; 
                 background-color: rgba(124, 58, 237, 0.05) !important; 
-            }nter;
             }
             [data-theme="dark"] .comment-section {
                 background-color: var(--card);
@@ -737,6 +804,21 @@
             [data-theme="dark"] .comment-body { color: var(--text); }
             [data-theme="dark"] .reply-btn, [data-theme="dark"] .btn-link { color: #818cf8 !important; }
 
+            [data-theme="dark"] .form-label.text-muted,
+            [data-theme="dark"] .form-label.smaller.text-muted {
+                color: #cbd5e1 !important;
+                opacity: 0.9;
+            }
+            [data-theme="dark"] .bg-light {
+                background-color: var(--sidebar-hover) !important;
+                color: var(--text);
+            }
+            [data-theme="dark"] .type-tab:not(.active) {
+                color: var(--text-secondary);
+            }
+            [data-theme="dark"] .type-tab:not(.active):hover {
+                color: var(--text);
+            }
             [data-theme="dark"] .nav-pills .nav-link:not(.active) {
                 color: #94a3b8;
             }
@@ -964,7 +1046,6 @@
                         </div>
                     </form>
                 `;
-                
                 const form = bodyDiv.querySelector('form');
                 form.addEventListener('submit', (e) => {
                     const editor = form.querySelector('.editor');
@@ -973,94 +1054,78 @@
                 });
             }
 
-            let ckEditorInstance;
-
-            function initCKEditor() {
-                ClassicEditor
-                    .create(document.querySelector('#description-editor'), {
-                        toolbar: ['bold', 'italic', 'underline', '|', 'bulletedList', 'numberedList', '|', 'link', 'blockQuote', '|', 'undo', 'redo'],
-                    })
-                    .then(editor => {
-                        ckEditorInstance = editor;
-                        
-                        // Sync data on change to avoid "required" validation errors
-                        editor.model.document.on('change:data', () => {
-                            const hiddenInput = document.querySelector('#description-hidden');
-                            if (hiddenInput) hiddenInput.value = editor.getData();
-                        });
-
-                        if (document.documentElement.getAttribute('data-theme') === 'dark') {
-                            applyDarkModeToCKEditor();
-                        }
-                    });
-            }
-
-            function applyDarkModeToCKEditor() {
-                const editorEl = document.querySelector('.ck-editor__editable');
-                const toolbarEl = document.querySelector('.ck-toolbar');
-                if (editorEl) {
-                    editorEl.style.backgroundColor = '#1e293b';
-                    editorEl.style.color = '#f1f5f9';
-                }
-                if (toolbarEl) {
-                    toolbarEl.style.backgroundColor = '#1e293b';
-                    toolbarEl.style.borderColor = '#334155';
-                }
-            }
-
-            // Choose File Logic
-            function initChooseFile(area) {
-                const input = area.querySelector('.choose-file-input');
-                const trigger = area.querySelector('.choose-file-trigger');
-                const preview = area.querySelector('.choose-file-preview');
-                const nameLabel = area.querySelector('.file-name');
-                const removeBtn = area.querySelector('.remove-file');
-
-                if (!input || !trigger || !preview || !nameLabel || !removeBtn) return;
-
-                function showPreview(file) {
-                    nameLabel.textContent = file.name;
-                    preview.classList.remove('d-none');
-                    trigger.classList.add('d-none');
-                    if (window.lucide) window.lucide.createIcons();
-                }
-
-                function reset() {
-                    input.value = '';
-                    preview.classList.add('d-none');
-                    trigger.classList.remove('d-none');
-                }
-
-                // Since trigger is now a <label>, clicks on it will bubble to the nested input.
-                // We only need to handle drag/drop and change events.
+            function setPostType(type, btn) {
+                const hiddenInput = document.getElementById('post_type_input');
+                const titleLabel = document.getElementById('post_modal_title');
+                if (hiddenInput) hiddenInput.value = type;
+                if (titleLabel) titleLabel.textContent = 'Create ' + type.charAt(0).toUpperCase() + type.slice(1);
                 
-                trigger.addEventListener('dragover', e => {
-                    e.preventDefault();
-                    trigger.classList.add('drag-over');
-                });
+                document.querySelectorAll('.type-tab').forEach(t => t.classList.remove('active'));
+                if (btn) btn.classList.add('active');
+                
+                const dateFields = document.getElementById('date_fields');
+                const fileFields = document.getElementById('file_field');
+                
+                if (dateFields && fileFields) {
+                    if (type === 'announcement') {
+                        dateFields.classList.add('d-none');
+                        fileFields.classList.add('d-none');
+                    } else if (type === 'material') {
+                        dateFields.classList.add('d-none');
+                        fileFields.classList.remove('d-none');
+                    } else if (type === 'assignment') {
+                        dateFields.classList.remove('d-none');
+                        fileFields.classList.remove('d-none');
+                    }
+                }
+            }
 
-                ['dragleave', 'dragend'].forEach(type => {
-                    trigger.addEventListener(type, () => trigger.classList.remove('drag-over'));
-                });
-
-                trigger.addEventListener('drop', e => {
-                    e.preventDefault();
-                    trigger.classList.remove('drag-over');
-                    if (e.dataTransfer.files[0]) {
-                        input.files = e.dataTransfer.files;
-                        showPreview(e.dataTransfer.files[0]);
+            // TinyMCE Initialization
+            function initTinyMCE(selector) {
+                const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+                tinymce.init({
+                    selector: selector,
+                    height: 300,
+                    menubar: false,
+                    plugins: 'advlist autolink lists link image charmap preview anchor searchreplace visualblocks code fullscreen insertdatetime media table code help wordcount',
+                    toolbar: 'undo redo | blocks | bold italic underline | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | removeformat | help',
+                    skin: isDark ? 'oxide-dark' : 'oxide',
+                    content_css: isDark ? 'dark' : 'default',
+                    setup: function (editor) {
+                        editor.on('change', function () {
+                            editor.save(); // Sync to textarea
+                        });
                     }
                 });
+            }
 
-                input.addEventListener('change', () => {
-                    if (input.files[0]) showPreview(input.files[0]);
-                });
+            // Dropzone Global Config
+            Dropzone.autoDiscover = false;
 
-                removeBtn.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    reset();
+            function initCustomDropzone(config) {
+                const dz = new Dropzone(config.selector, {
+                    url: "#", // Manual handling
+                    maxFiles: 1,
+                    autoProcessQueue: false,
+                    acceptedFiles: config.acceptedFiles || null,
+                    addRemoveLinks: true,
+                    dictDefaultMessage: config.message || "Drop file here",
+                    init: function() {
+                        this.on("addedfile", function(file) {
+                            if (this.files.length > 1) {
+                                this.removeFile(this.files[0]);
+                            }
+                            // Trigger binary transfer to hidden input for regular form submit
+                            const dataTransfer = new DataTransfer();
+                            dataTransfer.items.add(file);
+                            document.querySelector(config.inputSelector).files = dataTransfer.files;
+                        });
+                        this.on("removedfile", function() {
+                            document.querySelector(config.inputSelector).value = "";
+                        });
+                    }
                 });
+                return dz;
             }
 
             function setMinDateTime() {
@@ -1073,10 +1138,11 @@
 
             function showFieldError(fieldId, message) {
                 const field = document.getElementById(fieldId);
+                if (!field) return;
                 let err = field.nextElementSibling;
                 if (!err || !err.classList.contains('field-error')) {
                     err = document.createElement('p');
-                    err.classList.add('field-error');
+                    err.classList.add('field-error', 'text-danger', 'smaller', 'mt-1');
                     field.parentNode.insertBefore(err, field.nextSibling);
                 }
                 err.textContent = message;
@@ -1084,77 +1150,66 @@
 
             document.addEventListener('DOMContentLoaded', () => {
                 lucide.createIcons();
-                initCKEditor();
-                document.querySelectorAll('.choose-file-area').forEach(initChooseFile);
-                
-                // Extra init for any dynamic renders
-                lucide.createIcons();
-                
-
+                initTinyMCE('#description-editor');
                 setMinDateTime();
-
-                const openDate = document.getElementById('open_date');
-                if (openDate) {
-                    openDate.addEventListener('change', function() {
-                        const now = new Date();
-                        document.getElementById('due_date').min = this.value || now.toISOString().slice(0, 16);
+                
+                // Initialize Dropzones
+                @if($userRole === 'teacher')
+                    initCustomDropzone({
+                        selector: "#activity-dropzone",
+                        inputSelector: "#file-input-activity",
+                        message: "Drop attachment here"
                     });
-                }
 
-                // Activity Form Submission
+                    // Banner Dropzone
+                    const bannerDz = new Dropzone("#banner-dropzone", {
+                        url: "{{ route('classrooms.banner.update', $classroom) }}",
+                        paramName: "banner",
+                        headers: { 'X-CSRF-TOKEN': "{{ csrf_token() }}" },
+                        maxFiles: 1,
+                        acceptedFiles: "image/*",
+                        init: function() {
+                            this.on("success", function() { location.reload(); });
+                            this.on("error", function(file, res) { 
+                                alert(typeof res === 'string' ? res : (res.message || "Upload failed"));
+                                this.removeFile(file);
+                            });
+                        }
+                    });
+
+                    // Edit Modals Dropzones
+                    @foreach($announcements as $item)
+                        initCustomDropzone({
+                            selector: "#edit-dropzone-{{ $item->id }}",
+                            inputSelector: "#file-input-edit-{{ $item->id }}",
+                            message: "Drop new file here"
+                        });
+                    @endforeach
+                @else
+                    if (document.getElementById('submission-dropzone')) {
+                        initCustomDropzone({
+                            selector: "#submission-dropzone",
+                            inputSelector: "#file-input-submission",
+                            message: "Drop your work here"
+                        });
+                    }
+                @endif
+
                 const activityForm = document.getElementById('new-activity-form');
                 if (activityForm) {
                     activityForm.addEventListener('submit', function(e) {
-                        try {
-                            if (ckEditorInstance) {
-                                const data = ckEditorInstance.getData();
-                                document.querySelector('#description-hidden').value = data;
+                        const openDateEl = document.getElementById('open_date');
+                        const dueDateEl = document.getElementById('due_date');
+                        if (openDateEl && dueDateEl && openDateEl.value && dueDateEl.value) {
+                            if (new Date(dueDateEl.value) <= new Date(openDateEl.value)) {
+                                e.preventDefault();
+                                showFieldError('due_date', 'Due date must be after open date.');
                             }
-                            
-                            const now = new Date();
-                            const openDateEl = document.getElementById('open_date');
-                            const dueDateEl = document.getElementById('due_date');
-                            const postType = document.getElementById('post_type_input').value;
-                            
-                            const openDateVal = (openDateEl && openDateEl.value) ? new Date(openDateEl.value) : null;
-                            const dueDateVal = (dueDateEl && dueDateEl.value) ? new Date(dueDateEl.value) : null;
-
-                            if (postType === 'assignment' || postType === 'material') {
-                                if (openDateVal && !isNaN(openDateVal.getTime()) && openDateVal < now) {
-                                    e.preventDefault();
-                                    showFieldError('open_date', 'Open date cannot be in the past.');
-                                    return;
-                                }
-                                if (dueDateVal && !isNaN(dueDateVal.getTime()) && dueDateVal < now) {
-                                    e.preventDefault();
-                                    showFieldError('due_date', 'Due date cannot be in the past.');
-                                    return;
-                                }
-                                if (openDateVal && dueDateVal && !isNaN(openDateVal.getTime()) && !isNaN(dueDateVal.getTime()) && dueDateVal <= openDateVal) {
-                                    e.preventDefault();
-                                    showFieldError('due_date', 'Due date must be after the open date.');
-                                }
-                            }
-                        } catch (err) {
-                            console.error('Submit error:', err);
                         }
                     });
                 }
 
-                // Theme switch observer (if any exists in layout, we listen for theme changes)
-                const observer = new MutationObserver(() => {
-                    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-                    if (ckEditorInstance) {
-                        if (isDark) applyDarkModeToCKEditor();
-                        else {
-                            const editorEl = document.querySelector('.ck-editor__editable');
-                            const toolbarEl = document.querySelector('.ck-toolbar');
-                            if (editorEl) { editorEl.style.backgroundColor = ''; editorEl.style.color = ''; }
-                            if (toolbarEl) { toolbarEl.style.backgroundColor = ''; toolbarEl.style.borderColor = ''; }
-                        }
-                    }
-                });
-                observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+                // If you need icon refresh after dynamic content, call it manually in the success handlers
             });
         </script>
     @endpush

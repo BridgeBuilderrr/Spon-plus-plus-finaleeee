@@ -51,12 +51,22 @@
                 <div class="col-md-6 mb-4 classroom-card-item searchable-item" 
                      data-name="{{ strtolower($classroom->name) }}"
                      data-tags="{{ strtolower($classroom->tags->pluck('name')->join(' ')) }}">
-                    <div class="card h-100 p-4 classroom-card shadow-sm border-0">
-                        <div class="classroom-card-content w-100">
-                            <div class="d-flex justify-content-between align-items-start mb-2">
-                                <span class="badge {{ $classroom->pivot->role === 'teacher' ? 'bg-success' : 'bg-primary' }} rounded-pill px-3">
+                    <div class="card h-100 classroom-card shadow-sm border-0 overflow-hidden">
+                        <div class="classroom-card-banner" style="height: 100px; position: relative;">
+                            @if($classroom->banner_path)
+                                <img src="{{ asset($classroom->banner_path) }}?v={{ time() }}" class="w-100 h-100 object-fit-cover" alt="">
+                            @else
+                                <div class="w-100 h-100 classroom-thumb-gradient"></div>
+                            @endif
+                            <div class="position-absolute top-0 start-0 m-3">
+                                <span class="badge {{ $classroom->pivot->role === 'teacher' ? 'bg-success' : 'bg-primary' }} rounded-pill px-3 shadow-sm border-0">
                                     {{ ucfirst($classroom->pivot->role) }}
                                 </span>
+                            </div>
+                        </div>
+                        <div class="p-4 classroom-card-content w-100">
+                             <div class="d-flex justify-content-between align-items-start mb-2">
+                                <span class="d-none">Placeholder for logic sync</span>
                                 
                                 <div class="classroom-card-tags">
                                     @forelse($classroom->tags->take(3) as $tag)
@@ -115,7 +125,7 @@
 
                         <td class="col-thumb">
                             @if($classroom->banner_path)
-                                <img src="{{ Storage::url($classroom->banner_path) }}" class="classroom-thumb" alt="">
+                                <img src="{{ asset($classroom->banner_path) }}?v={{ time() }}" class="classroom-thumb" alt="">
                             @else
                                 <div class="classroom-thumb classroom-thumb-gradient"></div>
                             @endif
@@ -171,6 +181,11 @@
         <p class="text-muted">No classrooms match your search.</p>
     </div>
 
+    <!-- Pagination -->
+    <div class="mt-4 d-flex justify-content-center">
+        {{ $classrooms->links() }}
+    </div>
+
     <!-- Create Class Modal -->
     <div class="modal fade" id="createClassModal" tabindex="-1">
         <div class="modal-dialog modal-lg modal-dialog-centered">
@@ -184,7 +199,7 @@
                     <div class="modal-body">
                         <div class="mb-3">
                             <label class="form-label text-muted small fw-bold">Class Name</label>
-                            <input type="text" name="name" class="form-control rounded-3" placeholder="e.g. Mathematics 101" required>
+                            <input type="text" name="name" class="form-control rounded-3" placeholder="e.g. Mathematics 101 (Letters and Numbers allowed)" required>
                         </div>
                         <div class="mb-3">
                             <label class="form-label text-muted small fw-bold">Description</label>
@@ -290,21 +305,36 @@
         padding: 4px;
     }
     .view-btn {
-        width: 36px;
+        width: 42px;
         height: 36px;
-        border-radius: 50%;
+        border-radius: 999px;
         border: none;
         background: transparent;
-        color: var(--text-muted);
+        color: var(--text-secondary);
         display: flex;
         align-items: center;
         justify-content: center;
         cursor: pointer;
-        transition: all 0.2s;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
     }
     .view-btn.active {
-        background: var(--primary);
-        color: white;
+        background: var(--card);
+        color: #764ba2;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        border: 1px solid var(--border);
+    }
+    [data-theme="dark"] .view-btn.active {
+        background: rgba(255,255,255,0.05);
+        color: #a78bfa;
+        border-color: rgba(255,255,255,0.1);
+    }
+    .view-btn i {
+        width: 18px;
+        height: 18px;
+    }
+    .view-btn.active i {
+        transform: scale(1.1);
     }
 
     .classroom-card {
@@ -322,22 +352,23 @@
     }
     .classroom-tag {
         font-size: 0.7rem;
-        font-weight: 500;
-        background: rgba(118, 75, 162, 0.12);
-        color: #764ba2;
+        font-weight: 600;
+        background: rgba(118, 75, 162, 0.12) !important;
+        color: #764ba2 !important;
         border-radius: 999px;
         padding: 2px 8px;
-        border: 1px solid rgba(118, 75, 162, 0.25);
+        border: 1px solid rgba(118, 75, 162, 0.25) !important;
+        white-space: nowrap;
     }
     .classroom-tag-more {
-        background: var(--border);
-        color: var(--text-muted);
-        border: 1px solid var(--border);
+        background: var(--border) !important;
+        color: var(--text-secondary) !important;
+        border: 1px solid var(--border) !important;
     }
     [data-theme="dark"] .classroom-tag {
-        background: rgba(167, 139, 250, 0.15);
-        color: #a78bfa;
-        border-color: rgba(167, 139, 250, 0.3);
+        background: rgba(167, 139, 250, 0.15) !important;
+        color: #a78bfa !important;
+        border-color: rgba(167, 139, 250, 0.3) !important;
     }
 
     /* Spotify-style Classrooms Table */
@@ -515,4 +546,3 @@
 </script>
 @endpush
 @endsection
-

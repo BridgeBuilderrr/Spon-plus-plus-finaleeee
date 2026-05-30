@@ -66,7 +66,7 @@
                     {{-- Banner or gradient --}}
                     <div class="recent-card-banner" style="
                         {{ $classroom->banner_path
-                        ? 'background-image: url(' . \Illuminate\Support\Facades\Storage::url($classroom->banner_path) . '); background-size: cover; background-position: center;'
+                        ? 'background-image: url(' . asset($classroom->banner_path) . '?v=' . time() . '); background-size: cover; background-position: center;'
                         : 'background: linear-gradient(135deg, #764ba2, #667eea);' }}
                     ">
                         <span class="recent-card-name text-truncate">{{ $classroom->name }}</span>
