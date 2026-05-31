@@ -85,19 +85,19 @@
     .tag-selector {
         display: flex;
         flex-wrap: wrap;
-        gap: 8px;
-        padding: 16px;
+        gap: 9px;
+        padding: 17px;
         border: 1px solid var(--border);
-        border-radius: 12px;
+        border-radius: 13px;
         background: var(--card);
-        max-height: 250px;
+        max-height: 260px;
         overflow-y: auto;
     }
     .tag-chip {
         font-size: 0.85rem;
         padding: 6px 16px;
         border-radius: 999px;
-        border: 1px solid var(--border);
+        border: 2px solid var(--border);
         background: transparent;
         color: var(--text);
         cursor: pointer;
