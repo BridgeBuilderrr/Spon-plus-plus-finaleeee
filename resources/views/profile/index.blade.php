@@ -81,7 +81,7 @@
                                     </div>
                                     <div class="col-6">
                                         <div class="h3 fw-extrabold text-secondary mb-0">84%</div>
-                                        <div class="smaller text-muted fw-bold">AVG SCORE</div>
+                                        <div class="smaller text-muted fw-bold">AVRG SCORE</div>
                                     </div>
                                     <div class="col-12 pt-3">
                                         <div class="h3 fw-extrabold text-success mb-0">24</div>
@@ -121,7 +121,7 @@
                          <div class="empty-state-luxury py-4">
                             <i data-lucide="medal" size="54" class="text-muted opacity-25 mb-4"></i>
                             <h5 class="fw-bold text-muted">No achievements yet</h5>
-                            <p class="text-muted small">Complete assignments and participate in classes to earn rewards.</p>
+                            <p class="text-muted small">Complete assignments and participate in classes to earn Many rewards.</p>
                         </div>
                     </div>
                 </div>
@@ -145,7 +145,7 @@
                             <input type="text" name="name" class="form-control" value="{{ auth()->user()->name }}" required>
                         </div>
                         <div class="mb-0">
-                            <label class="form-label">Short Bio / Description</label>
+                            <label class="form-label"> Bio / Description</label>
                             <textarea name="bio" class="form-control" rows="4" placeholder="Share your passions, goals, or expertise...">{{ auth()->user()->bio }}</textarea>
                         </div>
                     </div>
@@ -163,7 +163,7 @@
         <div class="modal-dialog modal-lg modal-dialog-centered">
             <div class="modal-content overflow-hidden">
                 <div class="modal-header bg-dark text-white p-4">
-                    <h5 class="modal-title fw-bold">Perfect Your Profile Cover</h5>
+                    <h5 class="modal-title fw-bold">Maximize Your Profile Cover</h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body p-0 bg-black">
