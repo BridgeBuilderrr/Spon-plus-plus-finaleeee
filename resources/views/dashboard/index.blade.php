@@ -7,7 +7,7 @@
             ['text' => 'おかえりなさい', 'lang' => 'Japanese'],
             ['text' => '欢迎回来', 'lang' => 'Chinese'],
             ['text' => 'أهلاً بك مجدداً', 'lang' => 'Arabic'],
-            ['text' => 'Welcome back', 'lang' => 'English'],
+            ['text' => 'Welcome back Again', 'lang' => 'English'],
             ['text' => 'Bienvenue à nouveau', 'lang' => 'French'],
             ['text' => 'Bentornato', 'lang' => 'Italian']
         ];
