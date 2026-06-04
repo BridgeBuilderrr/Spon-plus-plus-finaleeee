@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-#[Fillable(['classroom_id', 'title', 'description', 'open_date', 'due_date'])]
+#[Fillable(['classroom_id', 'title', 'description', 'open_date', 'due_date', 'files'])]
 class Assignment extends Model
 {
     use HasFactory;
@@ -16,6 +16,7 @@ class Assignment extends Model
         return [
             'open_date' => 'datetime',
             'due_date' => 'datetime',
+            'files' => 'array',
         ];
     }
 

@@ -65,7 +65,6 @@
                     <div class="luxury-code-input-wrapper mb-2">
                         <input type="text" name="code" class="form-control text-center fw-extrabold ls-3 border-0 bg-transparent py-4 text-uppercase" placeholder="XXXXXXX" required maxlength="7" autocomplete="off">
                     </div>
-                    <div class="smaller text-muted opacity-50 fw-bold">CASE-SENSITIVE 7-DIGIT CODE</div>
                 </div>
                 <div class="modal-footer border-0 px-5 pb-5 pt-2 justify-content-center">
                     <button type="submit" class="btn btn-primary rounded-pill px-5 py-3 fw-bold shadow w-100 mb-2">Initialize Entry</button>

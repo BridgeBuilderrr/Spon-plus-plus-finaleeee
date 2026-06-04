@@ -33,16 +33,26 @@ Route::middleware('auth')->group(function () {
         Route::post('/exit', [\App\Http\Controllers\ClassroomController::class, 'exit'])->name('courses.exit');
 
         Route::post('/announcements', [\App\Http\Controllers\AnnouncementController::class, 'store'])->name('announcements.store');
+        
         Route::post('/materials', [\App\Http\Controllers\MaterialController::class, 'store'])->name('materials.store');
+        Route::post('/materials/{material}/update', [\App\Http\Controllers\MaterialController::class, 'update'])->name('materials.update');
+        Route::delete('/materials/{material}', [\App\Http\Controllers\MaterialController::class, 'destroy'])->name('materials.destroy');
+
         Route::post('/assignments', [\App\Http\Controllers\AssignmentController::class, 'store'])->name('assignments.store');
+        Route::post('/assignments/{assignment}/update', [\App\Http\Controllers\AssignmentController::class, 'update'])->name('assignments.update');
+        Route::delete('/assignments/{assignment}', [\App\Http\Controllers\AssignmentController::class, 'destroy'])->name('assignments.destroy');
+        
         Route::post('/assignments/{assignment}/submit', [\App\Http\Controllers\SubmissionController::class, 'store'])->name('submissions.store');
         Route::post('/comments', [\App\Http\Controllers\CommentController::class, 'store'])->name('comments.store');
         Route::delete('/comments/{comment}', [\App\Http\Controllers\CommentController::class, 'destroy'])->name('comments.destroy');
     });
 
     Route::post('/upload', [\App\Http\Controllers\MaterialController::class, 'upload'])->name('upload');
+    Route::get('/download-file', [\App\Http\Controllers\DownloadController::class, 'download'])->name('download.file');
+    Route::get('/download/{path}', [\App\Http\Controllers\ClassroomController::class, 'download'])->name('download')->where('path', '.*');
     
     Route::get('/profile', [\App\Http\Controllers\ProfileController::class, 'index'])->name('profile');
     Route::post('/profile/update', [\App\Http\Controllers\ProfileController::class, 'update'])->name('profile.update');
     Route::post('/profile/banner', [\App\Http\Controllers\ProfileController::class, 'updateBanner'])->name('profile.banner');
+    Route::post('/profile/avatar', [\App\Http\Controllers\ProfileController::class, 'updateAvatar'])->name('profile.avatar');
 });

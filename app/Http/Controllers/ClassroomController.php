@@ -202,4 +202,13 @@ class ClassroomController extends Controller
 
         return redirect()->route('courses.index')->with('success', 'Class deleted successfully.');
     }
+
+    public function download($path)
+    {
+        if (!Storage::disk('public')->exists($path)) {
+            return abort(404, 'File not found');
+        }
+
+        return Storage::disk('public')->download($path);
+    }
 }

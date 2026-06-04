@@ -7,7 +7,7 @@
             ['text' => 'おかえりなさい', 'lang' => 'Japanese'],
             ['text' => '欢迎回来', 'lang' => 'Chinese'],
             ['text' => 'أهلاً بك مجدداً', 'lang' => 'Arabic'],
-            ['text' => 'Welcome back Again', 'lang' => 'English'],
+            ['text' => 'Welcome back', 'lang' => 'English'],
             ['text' => 'Bienvenue à nouveau', 'lang' => 'French'],
             ['text' => 'Bentornato', 'lang' => 'Italian']
         ];
@@ -30,26 +30,80 @@
         </div>
     </div>
 
+    <!-- Stats Cards -->
+    <div class="row g-4 mb-5 animate-stagger">
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm rounded-5 p-4 h-100 luxury-stat-card">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="stat-icon-wrapper bg-primary-soft text-primary p-3 rounded-4">
+                        <i data-lucide="layout-dashboard" size="24"></i>
+                    </div>
+                    <div>
+                        <div class="text-muted smallest ls-1 uppercase fw-bold">Joined Spaces</div>
+                        <h4 class="fw-extrabold m-0 text-main">{{ $stats['total_classes'] }}</h4>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm rounded-5 p-4 h-100 luxury-stat-card">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="stat-icon-wrapper bg-success-soft text-success p-3 rounded-4">
+                        <i data-lucide="check-circle" size="24"></i>
+                    </div>
+                    <div>
+                        <div class="text-muted smallest ls-1 uppercase fw-bold">Completed Tasks</div>
+                        <h4 class="fw-extrabold m-0 text-main">{{ $stats['completed_tasks'] }}</h4>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm rounded-5 p-4 h-100 luxury-stat-card">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="stat-icon-wrapper bg-warning-soft text-warning p-3 rounded-4">
+                        <i data-lucide="activity" size="24"></i>
+                    </div>
+                    <div>
+                        <div class="text-muted smallest ls-1 uppercase fw-bold">Active Tasks</div>
+                        <h4 class="fw-extrabold m-0 text-main">{{ $stats['active_assignments'] }}</h4>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm rounded-5 p-4 h-100 luxury-stat-card bg-primary text-white shadow-lg">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="stat-icon-wrapper bg-white bg-opacity-25 text-white p-3 rounded-4 border border-white border-opacity-25">
+                        <i data-lucide="crown" size="24"></i>
+                    </div>
+                    <div>
+                        <div class="text-white-50 smallest ls-1 uppercase fw-bold">Learner Rank</div>
+                        <h5 class="fw-extrabold m-0 text-truncate" style="max-width: 120px;">{{ $stats['member_rank'] }}</h5>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="row g-4">
         <!-- Recently Accessed -->
         <div class="col-lg-8">
             <div class="d-flex justify-content-between align-items-center mb-4 px-2">
-                <h4 class="fw-bold m-0 d-flex align-items-center gap-2">
-                    <i data-lucide="clock-rewind" class="text-primary"></i>
+                <h4 class="fw-extrabold m-0 d-flex align-items-center gap-2 text-main">
+                    <i data-lucide="clock" class="text-primary"></i>
                     Recently Visited
                 </h4>
-                <a href="{{ route('courses.index') }}" class="btn btn-light rounded-pill px-4 fw-bold border-0 shadow-sm">Explore All</a>
+                <a href="{{ route('courses.index') }}" class="btn btn-light rounded-pill px-4 fw-bold border-0 shadow-sm transition-all hover-translate-y">Explore All</a>
             </div>
 
             <div class="row g-4">
                 @forelse($recentClassrooms as $classroom)
                 <div class="col-md-6">
                     <div class="card border-0 shadow-sm rounded-4 h-100 luxury-card p-0 overflow-hidden">
-                        <!-- Banner Header -->
                         <div class="classroom-card-banner" style="height: 100px; background: {{ $classroom->banner ? 'url('.asset('storage/'.$classroom->banner).')' : 'linear-gradient(45deg, var(--primary-color), var(--secondary-color))' }}; background-size: cover; background-position: center;"></div>
                         
                         <div class="p-4 position-relative">
-                            <!-- Avatar Overlay -->
                             <img src="https://ui-avatars.com/api/?name={{ urlencode($classroom->teacher->name) }}&background=6366f1&color=fff" 
                                  class="rounded-circle border border-4 border-white shadow-sm position-absolute" 
                                  width="54" height="54" style="top: -27px; left: 24px;">
@@ -61,11 +115,11 @@
                                         <i data-lucide="star" class="text-warning fill-warning" size="14"></i>
                                     @endif
                                 </div>
-                                <h5 class="fw-extrabold mb-2">{{ $classroom->title }}</h5>
+                                <h5 class="fw-extrabold mb-2 text-main">{{ $classroom->title }}</h5>
                                 <p class="text-muted small mb-4 line-clamp-2">{{ $classroom->description ?: 'No description available for this classroom.' }}</p>
                                 
                                 <div class="d-grid">
-                                    <a href="{{ route('courses.show', $classroom) }}" class="btn btn-outline-primary rounded-pill fw-bold border-2">Enter Classroom</a>
+                                    <a href="{{ route('courses.show', $classroom) }}" class="btn btn-outline-primary rounded-pill fw-bold border-2 transition-all">Enter Classroom</a>
                                 </div>
                             </div>
                         </div>
@@ -87,33 +141,33 @@
         <!-- Assignments Sidebar -->
         <div class="col-lg-4">
             <div class="card border-0 shadow-sm rounded-4 p-4 sticky-top h-auto" style="top: 100px; background: var(--card-bg);">
-                <h4 class="fw-bold mb-4 d-flex align-items-center gap-2">
-                    <i data-lucide="clipboard-list" class="text-primary"></i>
+                <h4 class="fw-extrabold mb-4 d-flex align-items-center gap-2 text-main">
+                    <i data-lucide="calendar-check" class="text-primary"></i>
                     To-Do List
                 </h4>
                 
                 <div class="d-flex flex-column gap-3">
                     @forelse($pendingAssignments as $assignment)
-                    <div class="p-3 rounded-4 bg-light-subtle transition-all hover-scale border border-transparent hover-border-primary">
+                    <a href="{{ route('courses.show', $assignment->classroom_id) }}" class="text-decoration-none p-3 rounded-4 bg-light-subtle transition-all hover-scale border border-transparent hover-border-primary">
                         <div class="d-flex align-items-start gap-3">
                             <div class="p-2 rounded-3 text-white shadow-sm" style="background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));">
                                 <i data-lucide="file-check" size="20"></i>
                             </div>
                             <div class="overflow-hidden">
-                                <div class="fw-bold text-truncate">{{ $assignment->title }}</div>
-                                <div class="text-muted smaller d-flex align-items-center gap-1 mt-1">
-                                    <i data-lucide="calendar" size="12"></i>
+                                <div class="fw-bold text-truncate text-main">{{ $assignment->title }}</div>
+                                <div class="text-muted smallest d-flex align-items-center gap-1 mt-1 fw-medium">
+                                    <i data-lucide="clock" size="12"></i>
                                     Due: {{ $assignment->due_date->format('M d, H:i') }}
                                 </div>
                             </div>
                         </div>
-                    </div>
+                    </a>
                     @empty
                     <div class="text-center py-4">
-                        <div class="bg-success-subtle d-inline-flex p-3 rounded-circle text-success mb-3">
-                            <i data-lucide="check-circle-2" size="28"></i>
+                        <div class="bg-success-soft d-inline-flex p-3 rounded-circle text-success mb-3">
+                            <i data-lucide="check-circle" size="28"></i>
                         </div>
-                        <h6 class="fw-bold mb-1">Excellent Work!</h6>
+                        <h6 class="fw-bold mb-1 text-main">Excellent Work!</h6>
                         <p class="text-muted smaller mb-0 px-4">You've completed all your pending tasks.</p>
                     </div>
                     @endforelse
@@ -121,7 +175,7 @@
 
                 @if($pendingAssignments->count() > 0)
                 <div class="mt-4 pt-3 border-top d-grid">
-                    <button class="btn btn-light rounded-pill fw-bold text-primary">View All Calendar</button>
+                    <button class="btn btn-light rounded-pill fw-bold text-primary transition-all">View Full Schedule</button>
                 </div>
                 @endif
             </div>
@@ -139,25 +193,31 @@
             box-shadow: 0 12px 24px -10px rgba(0,0,0,0.15) !important;
             border-color: var(--primary-color) !important;
         }
+        .luxury-stat-card {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 1px solid var(--border-color) !important;
+        }
+        .luxury-stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px -10px rgba(0,0,0,0.1) !important;
+            border-color: var(--primary-color) !important;
+        }
+        .bg-white-soft { background: rgba(255, 255, 255, 0.15); }
         .hover-scale {
             transition: var(--transition);
             cursor: pointer;
-            border: 1px solid transparent;
         }
         .hover-scale:hover {
-            transform: scale(1.01);
+            transform: scale(1.02);
             background: var(--card-bg) !important;
-            border-color: var(--primary-color);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            border-color: var(--primary-color) !important;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
         }
-        .line-clamp-2 {
-            display: -webkit-box;
-            -webkit-line-clamp: 2;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
-        }
-        .fill-warning { fill: #f59e0b; }
-        .bg-light-subtle { background-color: rgba(var(--primary-rgb), 0.05) !important; }
-        .border-dashed { border: 2px dashed var(--border-color); }
+        .text-main { color: #1e293b; }
+        .ls-1 { letter-spacing: 0.5px; }
+        .bg-primary-soft { background-color: rgba(99, 102, 241, 0.1); }
+        .bg-success-soft { background-color: rgba(34, 197, 94, 0.1); }
+        .bg-warning-soft { background-color: rgba(245, 158, 11, 0.1); }
+        .hover-translate-y:hover { transform: translateY(-2px); }
     </style>
 @endsection

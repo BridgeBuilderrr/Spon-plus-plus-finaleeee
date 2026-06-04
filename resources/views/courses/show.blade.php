@@ -87,12 +87,25 @@
 
             <div class="position-absolute bottom-0 start-0 p-5 text-white z-2">
                 <div class="d-flex align-items-center gap-3 opacity-90 fw-bold small mb-2">
-                    <span class="user-select-all bg-white text-primary px-3 py-1 rounded-pill shadow-sm">CODE: {{ $classroom->code }}</span>
+                    <div class="bg-white text-primary px-3 py-1 rounded-pill shadow-sm d-flex align-items-center gap-2">
+                        <span>CODE: {{ $classroom->code }}</span>
+                        <button class="btn btn-link p-0 text-primary border-0" onclick="copyClassCode('{{ $classroom->code }}')" title="Copy Code">
+                            <i data-lucide="copy" size="14"></i>
+                        </button>
+                    </div>
                 </div>
                 <h3 class="fw-extrabold mb-0 d-flex align-items-center gap-2">
                     Admin: {{ $classroom->teacher->name }}
                 </h3>
             </div>
+
+            <script>
+                function copyClassCode(code) {
+                    navigator.clipboard.writeText(code).then(() => {
+                        showToast('Class code copied to clipboard!', 'success');
+                    });
+                }
+            </script>
         </div>
     </div>
 
@@ -179,7 +192,9 @@
                                             <i data-lucide="more-vertical" size="18"></i>
                                         </button>
                                         <ul class="dropdown-menu dropdown-menu-end border-0 shadow-lg rounded-3">
-                                            <li><a class="dropdown-item text-danger fw-bold" href="#"><i data-lucide="trash-2" size="16" class="me-2"></i> Delete Post</a></li>
+                                            <li><a class="dropdown-item fw-bold" href="javascript:void(0)" onclick="editActivity('{{ $activity->id }}', '{{ isset($activity->due_date) ? 'assignment' : 'material' }}', {{ json_encode($activity->files ?? []) }})"><i data-lucide="edit-2" size="16" class="me-2 text-primary"></i> Edit Post</a></li>
+                                            <li><hr class="dropdown-divider"></li>
+                                            <li><a class="dropdown-item text-danger fw-bold" href="javascript:void(0)" onclick="deleteActivity('{{ $activity->id }}', '{{ isset($activity->due_date) ? 'assignment' : 'material' }}')"><i data-lucide="trash-2" size="16" class="me-2"></i> Delete Post</a></li>
                                         </ul>
                                     </div>
                                     @endif
@@ -193,8 +208,8 @@
                                     <div class="row g-3 mb-4">
                                         @foreach($activity->files as $file)
                                             @php $f = json_decode($file, true); @endphp
-                                            <div class="col-md-6 col-xl-4">
-                                                <a href="{{ asset('storage/' . $f['path']) }}" class="attachment-luxury-card d-flex align-items-center gap-3 p-3 text-decoration-none">
+                                            <div class="col-md-6 col-xl-4 font-jakarta">
+                                                <a href="{{ route('download.file', ['path' => $f['path'], 'assignment_id' => isset($activity->due_date) ? $activity->id : null]) }}" class="attachment-luxury-card d-flex align-items-center gap-3 p-3 text-decoration-none">
                                                     <div class="p-2 bg-light rounded-3">
                                                        <i data-lucide="file" class="text-primary" size="20"></i>
                                                     </div>
@@ -248,12 +263,12 @@
                                             </div>
                                         @endforeach
                                     </div>
-                                    <form action="{{ route('comments.store', $classroom) }}" method="POST" class="d-flex gap-3 align-items-center">
+                                    <form action="{{ route('comments.store', $classroom) }}" method="POST" class="d-flex gap-3 align-items-center ajax-comment-form">
                                         @csrf
                                         <input type="hidden" name="commentable_id" value="{{ $activity->id }}">
                                         <input type="hidden" name="commentable_type" value="{{ get_class($activity) }}">
                                         <div class="input-group luxury-comment-input flex-grow-1">
-                                            <input type="text" name="content" class="form-control border-0 bg-transparent px-4 py-3 shadow-none" placeholder="Add a public comment...">
+                                            <input type="text" name="content" class="form-control border-0 bg-transparent px-4 py-3 shadow-none" placeholder="Add a public comment..." required>
                                             <button class="btn btn-primary rounded-circle m-1" type="submit" style="width: 44px; height: 44px;"><i data-lucide="send" size="18"></i></button>
                                         </div>
                                     </form>
@@ -302,9 +317,12 @@
                                 </div>
                             </div>
                             @if(auth()->id() === $classroom->teacher_id)
-                                <form action="{{ route('courses.kick', [$classroom, $student]) }}" method="POST">
+                                <form action="{{ route('courses.kick', [$classroom, $student]) }}" method="POST" id="kick-form-{{ $student->id }}">
                                     @csrf
-                                    <button class="btn btn-outline-danger rounded-circle p-2 transition-all"><i data-lucide="user-minus" size="18"></i></button>
+                                    <button type="button" class="btn btn-outline-danger rounded-circle p-2 transition-all" 
+                                            onclick="kickMember('{{ $student->id }}', '{{ addslashes($student->name) }}')">
+                                        <i data-lucide="user-minus" size="18"></i>
+                                    </button>
                                 </form>
                             @endif
                         </div>
@@ -375,6 +393,65 @@
             lucide.createIcons();
         }
 
+        let currentEditDz = null;
+        function editActivity(id, type, files) {
+            const modalId = type === 'assignment' ? '#editAssignmentModal' : '#editMaterialModal';
+            const modalEl = document.querySelector(modalId);
+            const modal = new bootstrap.Modal(modalEl);
+            const form = modalEl.querySelector('form');
+            form.action = `/classes/{{ $classroom->id }}/${type}s/${id}`;
+            const item = document.querySelector(`#activity-${id}`);
+            const title = item.querySelector('h4').innerText;
+            const description = item.querySelector('.activity-description').innerHTML.trim();
+            form.querySelector('[name="title"]').value = title;
+            if (type === 'assignment') {
+                if (typeof tinymce !== 'undefined' && tinymce.get('edit-assignment-editor')) {
+                    tinymce.get('edit-assignment-editor').setContent(description);
+                }
+            } else {
+                form.querySelector('[name="description"]').value = description.replace(/<[^>]*>/g, '').trim();
+            }
+            if (currentEditDz) { currentEditDz.destroy(); currentEditDz = null; }
+            const dzId = type === 'assignment' ? '#dropzone-edit-assignment' : '#dropzone-edit-material';
+            const inputsId = type === 'assignment' ? '#edit-assignment-files-container' : '#edit-material-files-container';
+            const container = document.querySelector(inputsId);
+            container.innerHTML = '';
+            currentEditDz = new Dropzone(dzId, {
+                url: "{{ route('upload') }}",
+                maxFiles: 10,
+                maxFilesize: 50,
+                addRemoveLinks: true,
+                headers: { 'X-CSRF-TOKEN': "{{ csrf_token() }}" },
+                init: function() {
+                    files.forEach(f => {
+                        const file = typeof f === 'string' ? JSON.parse(f) : f;
+                        const mock = { name: file.name, size: file.size, accepted: true };
+                        this.displayExistingFile(mock, `{{ asset('storage') }}/${file.path}`);
+                        const input = document.createElement('input');
+                        input.type = 'hidden'; input.name = 'files[]'; input.value = JSON.stringify(file);
+                        container.appendChild(input);
+                    });
+                },
+                success: (file, res) => {
+                    const input = document.createElement('input');
+                    input.type = 'hidden'; input.name = 'files[]'; input.value = JSON.stringify(res);
+                    input.id = 'file-' + file.upload.uuid;
+                    container.appendChild(input);
+                },
+                removedfile: (file) => {
+                    if (file.upload) {
+                        const el = document.getElementById('file-' + file.upload.uuid);
+                        if (el) el.remove();
+                    } else {
+                        const inputs = container.querySelectorAll('input');
+                        inputs.forEach(i => { if (JSON.parse(i.value).name === file.name) i.remove(); });
+                    }
+                    if (file.previewElement && file.previewElement.parentNode) file.previewElement.parentNode.removeChild(file.previewElement);
+                }
+            });
+            modal.show();
+        }
+
         document.addEventListener('DOMContentLoaded', function() {
             const bannerInput = document.getElementById('banner-upload-input');
             const cropModal = new bootstrap.Modal(document.getElementById('bannerCropModal'));
@@ -431,6 +508,256 @@
                     };
                 });
             });
+
+            // AJAX Comment Handling
+            document.querySelectorAll('.ajax-comment-form').forEach(form => {
+                form.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    const formData = new FormData(this);
+                    const list = this.closest('.tab-pane').querySelector(`#comments-${formData.get('commentable_id')} .comments-list`);
+                    const btn = this.querySelector('button[type="submit"]');
+                    btn.disabled = true;
+
+                    fetch(this.action, {
+                        method: 'POST',
+                        body: formData,
+                        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                    })
+                    .then(res => res.json())
+                    .then(data => {
+                        if(data.success) {
+                            const newComment = `
+                                <div class="d-flex gap-3 mb-3 animation-fade-in">
+                                    <img src="${data.avatar}" class="rounded-circle shadow-sm" width="32" height="32">
+                                    <div class="flex-grow-1 p-3 rounded-4 bg-card border shadow-sm">
+                                        <div class="d-flex justify-content-between align-items-center mb-1">
+                                            <span class="fw-bold small">${data.user_name}</span>
+                                            <span class="text-muted smallest">Just now</span>
+                                        </div>
+                                        <div class="small">${data.content}</div>
+                                    </div>
+                                </div>
+                            `;
+                            list.insertAdjacentHTML('beforeend', newComment);
+                            this.reset();
+                            lucide.createIcons();
+                        }
+                    })
+                    .finally(() => btn.disabled = false);
+                });
+            });
+        });
+
+        function kickMember(studentId, studentName) {
+            showConfirm({
+                title: 'Kick Member',
+                message: 'Apakah anda yakin ingin menendang ' + studentName + '?',
+                btnText: 'Yes, Kick Member',
+                btnClass: 'btn-danger',
+                onConfirm: () => {
+                    document.getElementById(`kick-form-${studentId}`).submit();
+                }
+            });
+        }
+
+        function deleteActivity(id, type) {
+            showConfirm({
+                title: 'Delete Activity',
+                message: 'Are you sure you want to permanently delete this ' + type + '? This action cannot be undone.',
+                btnText: 'Delete Permanently',
+                onConfirm: () => {
+                    const form = document.createElement('form');
+                    form.method = 'POST';
+                    form.action = `/classes/{{ $classroom->id }}/${type}s/${id}`;
+                    form.innerHTML = `@csrf @method('DELETE')`;
+                    document.body.appendChild(form);
+                    form.submit();
+                }
+            });
+        }
+
+        function editActivity(id, type, files) {
+            const activityCard = document.getElementById(`activity-${id}`);
+            const title = activityCard.querySelector('h4').innerText;
+            const description = activityCard.querySelector('.activity-description').innerHTML.trim();
+            
+            let modal, form, dzElement;
+            if (type === 'assignment') {
+                modal = new bootstrap.Modal(document.getElementById('editAssignmentModal'));
+                form = document.getElementById('editAssignmentForm');
+                dzElement = "#dropzone-edit-assignment";
+                form.action = `/classes/{{ $classroom->id }}/assignments/${id}/update`;
+                form.querySelector('[name="title"]').value = title;
+                tinymce.get('edit-assignment-editor').setContent(description);
+            } else {
+                modal = new bootstrap.Modal(document.getElementById('editMaterialModal'));
+                form = document.getElementById('editMaterialForm');
+                dzElement = "#dropzone-edit-material";
+                form.action = `/classes/{{ $classroom->id }}/materials/${id}/update`;
+                form.querySelector('[name="title"]').value = title;
+                form.querySelector('[name="description"]').value = description.replace(/<[^>]*>?/gm, ''); // strip html for material desc
+            }
+
+            // Init or Reset Dropzone
+            const existingDz = Dropzone.instances.find(
+                dz => dz.element.id === dzElement.replace('#', '')
+            );
+            if (existingDz) existingDz.destroy();
+
+            const dz = new Dropzone(dzElement, {
+                url: "{{ route('upload') }}",
+                maxFilesize: 50,
+                maxFiles: 10,
+                autoProcessQueue: true,
+                addRemoveLinks: true,
+                dictRemoveFile: "Remove",
+                headers: { 'X-CSRF-TOKEN': "{{ csrf_token() }}" },
+                paramName: "file",
+                clickable: true
+            });
+
+            dz.on("success", (file, response) => {
+                const hidden = document.createElement('input');
+                hidden.type = 'hidden';
+                hidden.name = 'files[]';
+                hidden.value = JSON.stringify(response);
+                file.previewElement.appendChild(hidden);
+            });
+
+            // 4. Pre-populate existing files as per guide (emit pattern)
+            if (files && files.length > 0) {
+                files.forEach(f => {
+                    const fileData = typeof f === 'string' ? JSON.parse(f) : f;
+                    const mockFile = { name: fileData.name, size: fileData.size, status: Dropzone.ADDED, accepted: true };
+                    
+                    dz.emit("addedfile", mockFile);
+                    dz.emit("thumbnail", mockFile, "https://cdn-icons-png.flaticon.com/512/2991/2991108.png");
+                    dz.emit("complete", mockFile);
+                    
+                    // Add existing hidden input so it's kept on save
+                    const hidden = document.createElement('input');
+                    hidden.type = 'hidden';
+                    hidden.name = 'files[]';
+                    hidden.value = JSON.stringify(fileData);
+                    mockFile.previewElement.appendChild(hidden);
+                });
+            }
+            
+            modal.show();
+        }
+    </script>
+
+    <!-- Edit Assignment Modal -->
+    <div class="modal fade" id="editAssignmentModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content overflow-hidden">
+                <div class="modal-header border-0 p-5 pb-2">
+                    <h3 class="fw-extrabold text-main m-0 d-flex align-items-center gap-3">
+                        <div class="p-2 bg-primary-soft rounded-3 text-primary">
+                            <i data-lucide="edit-3" size="24"></i>
+                        </div>
+                        Edit Assignment
+                    </h3>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form id="editAssignmentForm" method="POST" enctype="multipart/form-data" class="upload-box-form">
+                    @csrf
+                    <div class="modal-body p-5 pt-3">
+                        <div class="mb-4">
+                            <label class="form-label">Task Title</label>
+                            <input type="text" name="title" class="form-control" placeholder="e.g. Weekly Reflection" required>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label">Detailed Instructions</label>
+                            <textarea name="description" id="edit-assignment-editor" class="form-control"></textarea>
+                        </div>
+
+                        <div class="row g-4 mb-4">
+                            <div class="col-md-6">
+                                <label class="form-label">Activation Date (Optional)</label>
+                                <div class="input-group luxury-input-group">
+                                    <span class="input-group-text border-0 bg-transparent ps-3"><i data-lucide="calendar" size="18" class="text-primary"></i></span>
+                                    <input type="datetime-local" name="open_date" class="form-control border-0 bg-transparent ps-2 py-3 date-min-now">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Submission Deadline</label>
+                                <div class="input-group luxury-input-group">
+                                    <span class="input-group-text border-0 bg-transparent ps-3"><i data-lucide="clock" size="18" class="text-danger"></i></span>
+                                    <input type="datetime-local" name="due_date" class="form-control border-0 bg-transparent ps-2 py-3 date-min-now" required>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-0">
+                            <label class="form-label">Update Reference Material (Optional)</label>
+                            <div class="dropzone dz-luxury rounded-4" id="dropzone-edit-assignment"></div>
+                        </div>
+                    </div>
+                    <div class="modal-footer border-0 p-5 pt-0">
+                        <button type="button" class="btn btn-light rounded-pill px-4 fw-bold" data-bs-dismiss="modal">Discard</button>
+                        <button type="submit" class="btn btn-primary rounded-pill px-5 fw-bold shadow">Save Changes</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Material Modal -->
+    <div class="modal fade" id="editMaterialModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content overflow-hidden">
+                <div class="modal-header border-0 p-5 pb-2">
+                    <h3 class="fw-extrabold text-main m-0 d-flex align-items-center gap-3">
+                        <div class="p-2 bg-success-soft rounded-3 text-success">
+                            <i data-lucide="book-open" size="24"></i>
+                        </div>
+                        Edit Material
+                    </h3>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form id="editMaterialForm" method="POST" enctype="multipart/form-data" class="upload-box-form">
+                    @csrf
+                    <div class="modal-body p-5 pt-3">
+                        <div class="mb-4">
+                            <label class="form-label">Material Name</label>
+                            <input type="text" name="title" class="form-control" required>
+                        </div>
+                        <div class="mb-4">
+                            <label class="form-label">Brief Overview</label>
+                            <textarea name="description" class="form-control" rows="4"></textarea>
+                        </div>
+                        <div class="mb-0">
+                            <label class="form-label">Update Resources</label>
+                            <div class="dropzone dz-luxury rounded-4" id="dropzone-edit-material"></div>
+                        </div>
+                    </div>
+                    <div class="modal-footer border-0 p-5 pt-0">
+                        <button type="button" class="btn btn-light rounded-pill px-4 fw-bold" data-bs-dismiss="modal">Discard</button>
+                        <button type="submit" class="btn btn-primary rounded-pill px-5 fw-bold shadow">Save Material</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            if (typeof tinymce !== 'undefined') {
+                tinymce.init({
+                    selector: '#edit-assignment-editor',
+                    height: 250,
+                    menubar: false,
+                    skin: (document.body.getAttribute('data-bs-theme') === 'dark' ? "oxide-dark" : "oxide"),
+                    content_css: (document.body.getAttribute('data-bs-theme') === 'dark' ? "dark" : "default"),
+                    plugins: 'lists link emoticons image code',
+                    toolbar: 'bold italic underline | numlist bullist | link image emoticons | code',
+                    setup: editor => editor.on('change', () => editor.save())
+                });
+            }
+
+            // TintMCE already handled above in editActivity
         });
     </script>
 

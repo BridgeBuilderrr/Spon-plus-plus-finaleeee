@@ -28,9 +28,9 @@
         }
 
         .auth-card {
-            background: rgba(var(--card-rgb, 255, 255, 255), 0.9);
+            background: rgba(255, 255, 255, 0.9);
             backdrop-filter: blur(24px) saturate(200%);
-            border: 1px solid rgba(var(--card-rgb, 255, 255, 255), 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.3);
             border-radius: 32px;
             box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
             width: 100%;
@@ -39,20 +39,6 @@
             transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
             position: relative;
             overflow: hidden;
-        }
-
-        @media (prefers-color-scheme: dark) {
-            :root {
-                --card-rgb: 15, 23, 42;
-                --text-main: #f8fafc;
-                --text-sec: #94a3b8;
-                --border-light: #1e293b;
-            }
-            body { background: linear-gradient(135deg, #020617 0%, #0f172a 100%); }
-            .auth-subtitle { color: var(--text-sec) !important; }
-            .auth-title { color: var(--text-main) !important; }
-            .form-label { color: var(--text-main) !important; opacity: 0.8; }
-            .form-control { background: #020617 !important; border-color: #1e293b !important; color: #fff !important; }
         }
 
         .auth-card:hover {

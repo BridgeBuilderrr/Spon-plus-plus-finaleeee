@@ -25,11 +25,13 @@
                         <div class="col-auto">
                             <!-- Premium Avatar -->
                             <div class="profile-avatar-wrapper shadow-lg rounded-circle p-1 bg-white" style="margin-top: -75px;">
-                                <img src="https://ui-avatars.com/api/?name={{ urlencode(auth()->user()->name) }}&size=150&background=6366f1&color=fff" 
-                                     class="rounded-circle border border-4 border-white" width="150" height="150" alt="{{ auth()->user()->name }}">
-                                <button class="btn btn-primary rounded-circle p-2 position-absolute shadow-sm" style="bottom: 10px; right: 10px;">
-                                    <i data-lucide="edit-3" size="16"></i>
+                                <img src="{{ auth()->user()->avatar_path ? asset('storage/' . auth()->user()->avatar_path) : 'https://ui-avatars.com/api/?name=' . urlencode(auth()->user()->name) . '&size=150&background=6366f1&color=fff' }}" 
+                                     id="current-avatar"
+                                     class="rounded-circle border border-4 border-white object-fit-cover" width="150" height="150" alt="{{ auth()->user()->name }}">
+                                <button class="btn btn-primary rounded-circle p-2 position-absolute shadow-sm" style="bottom: 10px; right: 10px;" onclick="document.getElementById('avatar-input').click()">
+                                    <i data-lucide="camera" size="16"></i>
                                 </button>
+                                <input type="file" id="avatar-input" class="d-none" accept="image/*">
                             </div>
                         </div>
                         <div class="col pt-4 pt-md-0">
@@ -76,16 +78,16 @@
                                 <h6 class="fw-bold mb-4 text-center">Learning Statistics</h6>
                                 <div class="row g-3 text-center">
                                     <div class="col-6">
-                                        <div class="h3 fw-extrabold text-primary mb-0">12</div>
+                                        <div class="h3 fw-extrabold text-primary mb-0">{{ $stats['classrooms_count'] }}</div>
                                         <div class="smaller text-muted fw-bold">COURSES</div>
                                     </div>
                                     <div class="col-6">
-                                        <div class="h3 fw-extrabold text-secondary mb-0">84%</div>
-                                        <div class="smaller text-muted fw-bold">AVRG SCORE</div>
+                                        <div class="h3 fw-extrabold text-secondary mb-0">{{ $stats['submissions_count'] }}</div>
+                                        <div class="smaller text-muted fw-bold">SUBMISSIONS</div>
                                     </div>
                                     <div class="col-12 pt-3">
-                                        <div class="h3 fw-extrabold text-success mb-0">24</div>
-                                        <div class="smaller text-muted fw-bold">BADGES EARNED</div>
+                                        <div class="h3 fw-extrabold text-success mb-0">{{ round($stats['score_avg'], 1) }}%</div>
+                                        <div class="smaller text-muted fw-bold">AVG SCORE</div>
                                     </div>
                                 </div>
                             </div>
@@ -121,7 +123,7 @@
                          <div class="empty-state-luxury py-4">
                             <i data-lucide="medal" size="54" class="text-muted opacity-25 mb-4"></i>
                             <h5 class="fw-bold text-muted">No achievements yet</h5>
-                            <p class="text-muted small">Complete assignments and participate in classes to earn Many rewards.</p>
+                            <p class="text-muted small">Complete assignments and participate in classes to earn rewards.</p>
                         </div>
                     </div>
                 </div>
@@ -145,7 +147,7 @@
                             <input type="text" name="name" class="form-control" value="{{ auth()->user()->name }}" required>
                         </div>
                         <div class="mb-0">
-                            <label class="form-label"> Bio / Description</label>
+                            <label class="form-label">Short Bio / Description</label>
                             <textarea name="bio" class="form-control" rows="4" placeholder="Share your passions, goals, or expertise...">{{ auth()->user()->bio }}</textarea>
                         </div>
                     </div>
@@ -158,12 +160,34 @@
         </div>
     </div>
 
+    <!-- Avatar Crop Modal -->
+    <div class="modal fade" id="avatarCropModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content overflow-hidden">
+                <div class="modal-header bg-dark text-white p-4">
+                    <h5 class="modal-title fw-bold">Update Profile Picture</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-0 bg-black">
+                    <img id="avatar-crop-image" src="" style="max-width: 100%;">
+                </div>
+                <div class="modal-footer p-4">
+                    <button type="button" class="btn btn-light rounded-pill px-4 fw-bold" data-bs-dismiss="modal">Discard</button>
+                    <button type="button" class="btn btn-primary rounded-pill px-5 fw-bold shadow" id="apply-avatar-crop">
+                        <span class="spinner-border spinner-border-sm d-none me-2"></span>
+                        Save Photo
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Banner Crop Modal -->
     <div class="modal fade" id="cropModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
         <div class="modal-dialog modal-lg modal-dialog-centered">
             <div class="modal-content overflow-hidden">
                 <div class="modal-header bg-dark text-white p-4">
-                    <h5 class="modal-title fw-bold">Maximize Your Profile Cover</h5>
+                    <h5 class="modal-title fw-bold">Perfect Your Profile Cover</h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body p-0 bg-black">
@@ -184,71 +208,75 @@
         document.addEventListener('DOMContentLoaded', function() {
             let cropper;
             const bannerInput = document.getElementById('banner-input');
-            const cropImage = document.getElementById('crop-image');
+            const avatarInput = document.getElementById('avatar-input');
+            
             const cropModal = new bootstrap.Modal(document.getElementById('cropModal'));
-            const cropBtn = document.getElementById('crop-btn');
-            const cropSpinner = document.getElementById('crop-spinner');
+            const avatarModal = new bootstrap.Modal(document.getElementById('avatarCropModal'));
 
-            bannerInput?.addEventListener('change', function(e) {
+            // Banner Logic
+            bannerInput?.addEventListener('change', e => handleSelect(e, document.getElementById('crop-image'), cropModal));
+            // Avatar Logic
+            avatarInput?.addEventListener('change', e => handleSelect(e, document.getElementById('avatar-crop-image'), avatarModal));
+
+            function handleSelect(e, target, modal) {
                 const files = e.target.files;
                 if (files && files.length > 0) {
                     const reader = new FileReader();
                     reader.onload = function(event) {
-                        cropImage.src = event.target.result;
-                        cropModal.show();
+                        target.src = event.target.result;
+                        modal.show();
                     };
                     reader.readAsDataURL(files[0]);
                 }
-            });
+            }
 
             document.getElementById('cropModal').addEventListener('shown.bs.modal', function() {
-                cropper = new Cropper(cropImage, {
+                cropper = new Cropper(document.getElementById('crop-image'), {
                     aspectRatio: 15 / 4,
                     viewMode: 2,
-                    guides: true,
-                    responsive: true,
                     background: false,
                 });
             });
 
-            document.getElementById('cropModal').addEventListener('hidden.bs.modal', function() {
-                if (cropper) {
-                    cropper.destroy();
-                    cropper = null;
-                }
-                bannerInput.value = '';
+            document.getElementById('avatarCropModal').addEventListener('shown.bs.modal', function() {
+                cropper = new Cropper(document.getElementById('avatar-crop-image'), {
+                    aspectRatio: 1 / 1,
+                    viewMode: 2,
+                    background: false,
+                    rounded: true
+                });
             });
 
-            cropBtn?.addEventListener('click', function() {
-                if (!cropper) return;
-                cropSpinner.classList.remove('d-none');
-                cropBtn.disabled = true;
+            [document.getElementById('cropModal'), document.getElementById('avatarCropModal')].forEach(m => {
+                m.addEventListener('hidden.bs.modal', () => { if(cropper) { cropper.destroy(); cropper = null; } });
+            });
 
-                const canvas = cropper.getCroppedCanvas({ width: 1500, height: 400 });
-                const base64Image = canvas.toDataURL('image/png');
+            document.getElementById('crop-btn').addEventListener('click', function() {
+                uploadCrop(cropper, "{{ route('profile.banner') }}", 'banner');
+            });
 
-                fetch("{{ route('profile.banner') }}", {
+            document.getElementById('apply-avatar-crop').addEventListener('click', function() {
+                uploadCrop(cropper, "{{ route('profile.avatar') }}", 'avatar');
+            });
+
+            function uploadCrop(c, url, fieldName) {
+                if (!c) return;
+                const canvas = c.getCroppedCanvas({ width: fieldName === 'avatar' ? 400 : 1500 });
+                const base64 = canvas.toDataURL('image/png');
+
+                fetch(url, {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                    },
-                    body: JSON.stringify({ banner: base64Image })
+                    headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
+                    body: JSON.stringify({ [fieldName]: base64 })
                 })
                 .then(res => res.json())
                 .then(data => {
                     if (data.success) {
-                        showToast('Profile cover updated!', 'success');
-                        setTimeout(() => location.reload(), 1000);
-                    } else {
-                        showToast(data.message, 'error');
+                        showToast('Profile updated!', 'success');
+                        location.reload();
                     }
-                })
-                .finally(() => {
-                    cropSpinner.classList.add('d-none');
-                    cropBtn.disabled = false;
                 });
-            });
+            }
         });
     </script>
 

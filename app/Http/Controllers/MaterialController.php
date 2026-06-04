@@ -20,16 +20,41 @@ class MaterialController extends Controller
         $classroom->materials()->create([
             'title' => $request->title,
             'description' => $request->description,
-            'files' => $request->files,
+            'files' => $request->input('files', []),
         ]);
 
         return redirect()->route('courses.show', $classroom)->with('success', 'Material uploaded successfully!');
     }
 
+    public function update(Request $request, Classroom $classroom, \App\Models\Material $material)
+    {
+        if ($classroom->teacher_id !== auth()->id()) return abort(403);
+
+        $request->validate([
+            'title' => 'required|string|max:255',
+            'description' => 'nullable|string',
+        ]);
+
+        $material->update([
+            'title' => $request->title,
+            'description' => $request->description,
+            'files' => $request->input('files', $material->files)
+        ]);
+
+        return back()->with('success', 'Material updated!');
+    }
+
+    public function destroy(Classroom $classroom, Material $material)
+    {
+        if ($classroom->teacher_id !== auth()->id()) return abort(403);
+        $material->delete();
+        return back()->with('success', 'Material deleted.');
+    }
+
     public function upload(Request $request)
     {
         $request->validate([
-            'file' => 'required|file|max:20480', // 20MB limit
+            'file' => 'required|file|max:51200', // 50MB limit
         ]);
 
         $path = $request->file('file')->store('materials', 'public');

@@ -92,9 +92,11 @@
                         <div class="small fw-medium text-muted mb-3">Taught by <b>{{ $classroom->teacher->name }}</b></div>
                         
                         <div class="d-flex flex-wrap gap-1 mb-4 h-auto" style="min-height: 20px;">
-                            @foreach($classroom->tags ?? [] as $tag)
-                                <span class="badge rounded-pill luxury-tag">{{ $tag }}</span>
-                            @endforeach
+                            @if($classroom->tags)
+                                @foreach($classroom->tags as $tag)
+                                    <span class="badge rounded-pill luxury-tag">{{ $tag }}</span>
+                                @endforeach
+                            @endif
                         </div>
 
                         <div class="d-grid mt-auto">
@@ -126,7 +128,7 @@
                         <tbody>
                             @foreach($classrooms as $index => $classroom)
                             <tr class="cursor-pointer" onclick="window.location='{{ route('courses.show', $classroom) }}'">
-                                <td class="ps-4 text-muted fw-bold">{{ $index + 1 }}</td>
+                                <td class="ps-4 text-muted fw-bold">{{ ($classrooms->currentPage()-1) * $classrooms->perPage() + $index + 1 }}</td>
                                 <td>
                                     <div class="d-flex align-items-center gap-3">
                                         <div class="rounded-circle border border-primary border-2 p-1">
@@ -143,9 +145,11 @@
                                 </td>
                                 <td>
                                     <div class="d-flex flex-wrap gap-1">
-                                        @foreach($classroom->tags ?? [] as $tag)
-                                            <span class="badge rounded-pill bg-light text-muted border smallest">{{ $tag }}</span>
-                                        @endforeach
+                                        @if($classroom->tags)
+                                            @foreach($classroom->tags as $tag)
+                                                <span class="badge rounded-pill bg-light text-muted border smallest">{{ $tag }}</span>
+                                            @endforeach
+                                        @endif
                                     </div>
                                 </td>
                                 <td class="text-muted smaller fw-medium" style="max-width: 200px;">{{ Str::limit($classroom->description, 50) }}</td>
@@ -160,9 +164,11 @@
             </div>
         </div>
 
-        <div class="mt-5 d-flex justify-content-between align-items-center">
-            <div class="text-muted small fw-medium">Displaying {{ $classrooms->count() }} learning spaces</div>
-            {{ $classrooms->links() }}
+        <div class="mt-5 d-flex flex-column flex-md-row justify-content-between align-items-center gap-4">
+            <div class="text-muted small fw-bold ls-1 uppercase">Showing {{ $classrooms->firstItem() }} - {{ $classrooms->lastItem() }} of {{ $classrooms->total() }} results</div>
+            <div class="luxury-pagination">
+                {{ $classrooms->links('pagination::bootstrap-5') }}
+            </div>
         </div>
     @endif
 
@@ -199,6 +205,8 @@
             transition: var(--transition);
             border: 1px solid var(--border-color) !important;
             background: var(--card-bg);
+            display: flex;
+            flex-direction: column;
         }
         .course-luxury-card:hover { 
             border-color: var(--primary-color) !important; 
@@ -240,20 +248,33 @@
             cursor: pointer;
             transition: var(--transition);
         }
-        .luxury-select:focus {
-            border-color: var(--primary-color);
-            box-shadow: 0 0 0 4px rgba(var(--primary-rgb), 0.1);
-        }
         .active-view { background: var(--primary-color) !important; color: #fff !important; }
         .luxury-view-btn { transition: var(--transition); color: var(--text-muted); }
         .luxury-view-btn:hover { color: var(--primary-color); background: var(--sidebar-hover); }
         .luxury-tag { background: rgba(var(--primary-rgb), 0.1); color: var(--primary-color); font-size: 0.65rem; font-weight: 700; border: 1px solid rgba(var(--primary-rgb), 0.05); }
-        .course-banner-area { position: relative; }
-        .banner-glass-overlay { position: absolute; bottom: 0; left: 0; right: 0; height: 40px; background: linear-gradient(0deg, var(--card-bg) 0%, transparent 100%); }
-        .transition-fade { animation: fadeIn 0.4s ease; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        .smaller { font-size: 0.75rem; }
-        .smallest { font-size: 0.65rem; }
-        .bg-light-subtle { background-color: rgba(var(--primary-rgb), 0.05) !important; }
+        
+        /* Pagination Luxury Styling */
+        .luxury-pagination .pagination { margin-bottom: 0; gap: 5px; }
+        .luxury-pagination .page-link {
+            border-radius: 10px !important;
+            padding: 8px 16px;
+            font-weight: 700;
+            color: var(--text-muted);
+            border: 1px solid var(--border-color);
+            transition: all 0.2s ease;
+        }
+        .luxury-pagination .page-item.active .page-link {
+            background: var(--primary-color);
+            border-color: var(--primary-color);
+            color: #fff;
+            box-shadow: 0 4px 10px rgba(var(--primary-rgb), 0.3);
+        }
+        .luxury-pagination .page-link:hover {
+            background: var(--primary-soft);
+            color: var(--primary-color);
+        }
+
+        .ls-1 { letter-spacing: 1px; }
+        .uppercase { text-transform: uppercase; }
     </style>
 @endsection

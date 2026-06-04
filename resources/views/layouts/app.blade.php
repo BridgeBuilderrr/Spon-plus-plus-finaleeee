@@ -18,6 +18,14 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js"></script>
 
+    <!-- Dropzone.js (Safari Compatible CDN) -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/dropzone@6.0.0/dist/dropzone.css">
+    <script src="https://cdn.jsdelivr.net/npm/dropzone@6.0.0/dist/dropzone.umd.min.js"></script>
+    <script>Dropzone.autoDiscover = false;</script>
+
+    <!-- TinyMCE (Safari Compatible CDN) -->
+    <script src="https://cdn.jsdelivr.net/npm/tinymce@7/tinymce.min.js"></script>
+
     <!-- UI Enhancements Style -->
     <style>
         :root {
@@ -483,24 +491,6 @@
                 }
             });
         }
-
-        // Idle Session Logic (Professional Touch)
-        let idleTimer;
-        const IDLE_TIMEOUT = 10 * 60 * 1000; // 10 Minutes
-
-        function resetIdleTimer() {
-            clearTimeout(idleTimer);
-            idleTimer = setTimeout(() => {
-                showToast('Session idle. Auto-logging out for security...', 'warning');
-                setTimeout(() => {
-                    document.querySelector('form[action="{{ route('logout') }}"]').submit();
-                }, 1500);
-            }, IDLE_TIMEOUT);
-        }
-
-        document.addEventListener('mousemove', resetIdleTimer);
-        document.addEventListener('keypress', resetIdleTimer);
-        resetIdleTimer();
 
         // Flash Messages
         @if(session('success')) showToast("{{ session('success') }}", 'success'); @endif
