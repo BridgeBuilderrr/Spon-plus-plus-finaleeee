@@ -15,12 +15,19 @@ class ClassroomController extends Controller
     {
         $user = Auth::user();
         
+        // Base query from user's classrooms
         $query = $user->classrooms();
 
-        // Search
-        if ($request->has('search')) {
-            $query->where('title', 'like', '%' . $request->search . '%')
-                  ->orWhere('tags', 'like', '%' . $request->search . '%');
+        // Search logic (grouped to avoid affecting the user filter)
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('title', 'like', '%' . $search . '%')
+                  ->orWhere('tags', 'like', '%' . $search . '%')
+                  ->orWhereHas('teacher', function($t) use ($search) {
+                      $t->where('name', 'like', '%' . $search . '%');
+                  });
+            });
         }
 
         // Sorting
@@ -31,7 +38,10 @@ class ClassroomController extends Controller
             $query->orderByPivot('last_accessed_at', 'desc');
         }
 
-        $classrooms = $query->paginate(12)->withQueryString();
+        // Get classrooms with teacher information
+        $classrooms = $query->with('teacher')
+                           ->paginate(12)
+                           ->withQueryString();
 
         return view('courses.index', compact('classrooms'));
     }
@@ -110,7 +120,9 @@ class ClassroomController extends Controller
             'teacher'
         ]);
 
-        return view('courses.show', compact('classroom'));
+        $role = $classroom->users()->where('user_id', Auth::id())->first()->pivot->role ?? 'Member';
+
+        return view('courses.show', compact('classroom', 'role'));
     }
 
     public function people(Classroom $classroom)
@@ -171,26 +183,25 @@ class ClassroomController extends Controller
 
     public function updateBanner(Request $request, Classroom $classroom)
     {
-        if ($classroom->teacher_id !== Auth::id()) return back()->with('error', 'Unauthorized.');
+        if ($classroom->teacher_id !== Auth::id()) return response()->json(['success' => false, 'message' => 'Unauthorized.'], 403);
 
         $request->validate([
-            'banner' => 'required|string', // Base64
+            'banner' => 'required|image|mimes:jpeg,png,jpg,gif|max:5120',
         ]);
 
-        $image = $request->banner;
-        $image = str_replace('data:image/png;base64,', '', $image);
-        $image = str_replace(' ', '+', $image);
-        $imageName = 'banners/' . Str::random(40) . '.png';
-        Storage::disk('public')->put($imageName, base64_decode($image));
+        if ($request->hasFile('banner')) {
+            // Delete old banner if exists
+            if ($classroom->banner) {
+                Storage::disk('public')->delete($classroom->banner);
+            }
 
-        // Delete old banner if exists
-        if ($classroom->banner) {
-            Storage::disk('public')->delete($classroom->banner);
+            $path = $request->file('banner')->store('banners', 'public');
+            $classroom->update(['banner' => $path]);
+
+            return response()->json(['success' => true, 'path' => asset('storage/' . $path)]);
         }
 
-        $classroom->update(['banner' => $imageName]);
-
-        return response()->json(['success' => true, 'path' => asset('storage/' . $imageName)]);
+        return response()->json(['success' => false, 'message' => 'No file uploaded.'], 400);
     }
 
     public function deleteBanner(Classroom $classroom)

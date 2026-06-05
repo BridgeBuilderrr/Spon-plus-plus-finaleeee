@@ -94,7 +94,7 @@
                     <i data-lucide="clock" class="text-primary"></i>
                     Recently Visited
                 </h4>
-                <a href="{{ route('courses.index') }}" class="btn btn-light rounded-pill px-4 fw-bold border-0 shadow-sm transition-all hover-translate-y">Explore All</a>
+                <a href="{{ route('courses.index') }}" class="btn btn-luxury-light rounded-pill px-4 fw-bold border-0 shadow-sm transition-all hover-translate-y btn-ripple" onclick="addRipple(event, this)">Explore All</a>
             </div>
 
             <div class="row g-4">
@@ -119,7 +119,7 @@
                                 <p class="text-muted small mb-4 line-clamp-2">{{ $classroom->description ?: 'No description available for this classroom.' }}</p>
                                 
                                 <div class="d-grid">
-                                    <a href="{{ route('courses.show', $classroom) }}" class="btn btn-outline-primary rounded-pill fw-bold border-2 transition-all">Enter Classroom</a>
+                                    <a href="{{ route('courses.show', $classroom) }}" class="btn btn-primary rounded-pill fw-bold py-2 px-4 shadow-sm" onclick="addRipple(event, this)">Enter Classroom</a>
                                 </div>
                             </div>
                         </div>
@@ -175,7 +175,7 @@
 
                 @if($pendingAssignments->count() > 0)
                 <div class="mt-4 pt-3 border-top d-grid">
-                    <button class="btn btn-light rounded-pill fw-bold text-primary transition-all">View Full Schedule</button>
+                    <button class="btn btn-luxury-light rounded-pill fw-bold text-primary transition-all btn-ripple" onclick="addRipple(event, this)">View Full Schedule</button>
                 </div>
                 @endif
             </div>
@@ -213,7 +213,6 @@
             border-color: var(--primary-color) !important;
             box-shadow: 0 4px 15px rgba(0,0,0,0.05);
         }
-        .text-main { color: #1e293b; }
         .ls-1 { letter-spacing: 0.5px; }
         .bg-primary-soft { background-color: rgba(99, 102, 241, 0.1); }
         .bg-success-soft { background-color: rgba(34, 197, 94, 0.1); }

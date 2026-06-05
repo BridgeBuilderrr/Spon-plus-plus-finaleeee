@@ -4,7 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Models\Classroom;
 use App\Models\Material;
+use App\Notifications\ClassroomActivityNotification;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Storage;
 
 class MaterialController extends Controller
@@ -17,11 +19,13 @@ class MaterialController extends Controller
             'files' => 'required|array', // Array of file names already uploaded via fine-uploader/dropzone
         ]);
 
-        $classroom->materials()->create([
+        $material = $classroom->materials()->create([
             'title' => $request->title,
             'description' => $request->description,
             'files' => $request->input('files', []),
         ]);
+
+        Notification::send($classroom->users, new ClassroomActivityNotification($classroom, $material, 'material'));
 
         return redirect()->route('courses.show', $classroom)->with('success', 'Material uploaded successfully!');
     }

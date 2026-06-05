@@ -11,7 +11,7 @@
         </div>
         <div class="col-md-6 text-md-end">
             <div class="d-flex gap-3 justify-content-md-end">
-                <button class="btn btn-light rounded-pill px-4 fw-bold border-0 shadow-sm" data-bs-toggle="modal" data-bs-target="#joinClassModal">
+                <button class="btn btn-luxury-light rounded-pill px-4 fw-bold border-0 shadow-sm btn-ripple" data-bs-toggle="modal" data-bs-target="#joinClassModal" onclick="addRipple(event, this)">
                     <i data-lucide="plus" class="me-2" size="18"></i>
                     Join Class
                 </button>
@@ -32,7 +32,7 @@
             <p class="text-muted mb-5 mx-auto" style="max-width: 400px;">Every great journey starts with a single step. Join an existing class or create your own learning space to begin.</p>
             <div class="d-flex justify-content-center gap-3">
                 <button class="btn btn-primary btn-lg rounded-pill px-5 fw-bold" data-bs-toggle="modal" data-bs-target="#createClassModal">Create Now</button>
-                <button class="btn btn-light btn-lg rounded-pill px-5 fw-bold" data-bs-toggle="modal" data-bs-target="#joinClassModal">Join One</button>
+                <button class="btn btn-luxury-light btn-lg rounded-pill px-5 fw-bold btn-ripple" data-bs-toggle="modal" data-bs-target="#joinClassModal" onclick="addRipple(event, this)">Join One</button>
             </div>
         </div>
     @else
@@ -50,11 +50,14 @@
                     </select>
                 </form>
                 
-                <div class="d-flex align-items-center gap-2 bg-light-subtle p-1 rounded-pill">
-                    <button class="btn luxury-view-btn p-2 rounded-circle" onclick="setView('grid')" id="btn-grid" title="Grid View">
+                <div class="luxury-view-switcher position-relative d-flex align-items-center p-1">
+                    <div class="switcher-active-pill" id="switcher-pill"></div>
+                    <button class="btn luxury-view-btn p-2 rounded-circle position-relative"
+                            onclick="setView('grid')" id="btn-grid" title="Grid View">
                         <i data-lucide="grid-3x3" size="18"></i>
                     </button>
-                    <button class="btn luxury-view-btn p-2 rounded-circle" onclick="setView('list')" id="btn-list" title="List View">
+                    <button class="btn luxury-view-btn p-2 rounded-circle position-relative"
+                            onclick="setView('list')" id="btn-list" title="List View">
                         <i data-lucide="list" size="18"></i>
                     </button>
                 </div>
@@ -164,8 +167,7 @@
             </div>
         </div>
 
-        <div class="mt-5 d-flex flex-column flex-md-row justify-content-between align-items-center gap-4">
-            <div class="text-muted small fw-bold ls-1 uppercase">Showing {{ $classrooms->firstItem() }} - {{ $classrooms->lastItem() }} of {{ $classrooms->total() }} results</div>
+        <div class="mt-5 d-flex justify-content-center align-items-center">
             <div class="luxury-pagination">
                 {{ $classrooms->links('pagination::bootstrap-5') }}
             </div>
@@ -180,17 +182,20 @@
             const list = document.getElementById('courses-list');
             const btnGrid = document.getElementById('btn-grid');
             const btnList = document.getElementById('btn-list');
+            const pill = document.getElementById('switcher-pill');
 
             if (view === 'grid') {
                 grid.classList.remove('d-none');
                 list.classList.add('d-none');
                 btnGrid.classList.add('active-view');
                 btnList.classList.remove('active-view');
+                if(pill) pill.style.transform = 'translateX(0)';
             } else {
                 grid.classList.add('d-none');
                 list.classList.remove('d-none');
                 btnGrid.classList.remove('active-view');
                 btnList.classList.add('active-view');
+                if(pill) pill.style.transform = 'translateX(36px)';
             }
             localStorage.setItem('courses_view', view);
             lucide.createIcons();
@@ -248,9 +253,44 @@
             cursor: pointer;
             transition: var(--transition);
         }
-        .active-view { background: var(--primary-color) !important; color: #fff !important; }
-        .luxury-view-btn { transition: var(--transition); color: var(--text-muted); }
-        .luxury-view-btn:hover { color: var(--primary-color); background: var(--sidebar-hover); }
+        .luxury-view-switcher {
+            background: var(--bs-light-bg-subtle, rgba(0,0,0,0.05));
+            border-radius: 999px;
+            gap: 0;
+            width: fit-content;
+        }
+        .switcher-active-pill {
+            position: absolute;
+            top: 4px;
+            left: 4px;
+            width: 36px;
+            height: 36px;
+            background: var(--primary-color);
+            border-radius: 50%;
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 0;
+            box-shadow: 0 4px 12px rgba(var(--primary-rgb), 0.35);
+            pointer-events: none;
+        }
+        .luxury-view-btn {
+            width: 36px;
+            height: 36px;
+            z-index: 1;
+            transition: color 0.2s ease;
+            color: var(--text-muted);
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .luxury-view-btn.active-view {
+            color: #fff !important;
+            background: transparent !important;
+        }
+        .luxury-view-btn:not(.active-view):hover {
+            color: var(--primary-color);
+            background: transparent;
+        }
         .luxury-tag { background: rgba(var(--primary-rgb), 0.1); color: var(--primary-color); font-size: 0.65rem; font-weight: 700; border: 1px solid rgba(var(--primary-rgb), 0.05); }
         
         /* Pagination Luxury Styling */

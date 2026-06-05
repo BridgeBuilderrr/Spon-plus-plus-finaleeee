@@ -157,6 +157,40 @@
     </div>
 </div>
 
+<!-- Share Announcement Modal -->
+<div class="modal fade" id="createAnnouncementModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content overflow-hidden">
+            <div class="modal-header border-0 p-5 pb-2">
+                <h3 class="fw-extrabold text-main m-0 d-flex align-items-center gap-3">
+                    <div class="p-2 bg-warning-soft rounded-3 text-warning">
+                        <i data-lucide="megaphone" size="24"></i>
+                    </div>
+                    Share Announcement
+                </h3>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form action="{{ route('announcements.store', $classroom) }}" method="POST">
+                @csrf
+                <div class="modal-body p-5 pt-3">
+                    <div class="mb-4">
+                        <label class="form-label">Announcement Title</label>
+                        <input type="text" name="title" class="form-control" placeholder="e.g. Schedule for Final Exams" required autofocus>
+                    </div>
+                    <div class="mb-0">
+                        <label class="form-label">Detailed Message</label>
+                        <textarea name="description" id="announcement-editor" class="form-control"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 p-5 pt-0">
+                    <button type="button" class="btn btn-light rounded-pill px-4 fw-bold btn-ripple" data-bs-dismiss="modal" onclick="addRipple(event, this)">Discard</button>
+                    <button type="submit" class="btn btn-primary rounded-pill px-5 fw-bold shadow btn-ripple" onclick="addRipple(event, this)">Post Announcement</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 <script>
     // ─── Dropzone Registry ───────────────────────────────────────────────────────
     // Keeps track of all initialized instances so we can destroy before reinit.
@@ -318,13 +352,13 @@
         // TinyMCE
         if (typeof tinymce !== 'undefined') {
             tinymce.init({
-                selector: '#assignment-editor',
-                height: 250,
+                selector: '#assignment-editor, #announcement-editor',
+                height: 300,
                 menubar: false,
                 skin: (document.body.getAttribute('data-bs-theme') === 'dark' ? 'oxide-dark' : 'oxide'),
                 content_css: (document.body.getAttribute('data-bs-theme') === 'dark' ? 'dark' : 'default'),
-                plugins: 'lists link emoticons image code',
-                toolbar: 'bold italic underline | numlist bullist | link image emoticons | code',
+                plugins: 'lists link emoticons image code table',
+                toolbar: 'undo redo | blocks | bold italic underline | alignleft aligncenter alignright | numlist bullist | link image emoticons | table code',
                 setup: editor => editor.on('change', () => editor.save())
             });
         }

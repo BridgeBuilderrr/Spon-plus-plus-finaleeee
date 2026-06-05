@@ -4,7 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Models\Assignment;
 use App\Models\Classroom;
+use App\Notifications\ClassroomActivityNotification;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Notification;
 
 class AssignmentController extends Controller
 {
@@ -17,13 +19,15 @@ class AssignmentController extends Controller
             'due_date' => 'required|date|after:now|after_or_equal:open_date',
         ]);
 
-        $classroom->assignments()->create([
+        $assignment = $classroom->assignments()->create([
             'title' => $request->title,
             'description' => $request->description,
             'open_date' => $request->open_date,
             'due_date' => $request->due_date,
             'files' => $request->input('files', [])
         ]);
+
+        Notification::send($classroom->users, new ClassroomActivityNotification($classroom, $assignment, 'assignment'));
 
         return redirect()->route('courses.show', $classroom)->with('success', 'Assignment posted!');
     }

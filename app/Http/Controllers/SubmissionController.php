@@ -11,30 +11,55 @@ class SubmissionController extends Controller
 {
     public function store(Request $request, \App\Models\Classroom $classroom, Assignment $assignment)
     {
-        // For "Mark as Done", files might be empty if it's just a status change
-        // But user said "automatically when file downloaded", which isn't standard.
-        // I'll make files optional if they just want to mark it as done.
         $request->validate([
             'content' => 'nullable|string',
             'files' => 'nullable|array|max:10',
         ]);
 
-        // Check if already submitted
         if ($assignment->submissions()->where('user_id', Auth::id())->exists()) {
             return back()->with('error', 'You have already submitted this assignment.');
         }
 
-        // Check if past deadline
         if ($assignment->due_date && $assignment->due_date->isPast()) {
-            return back()->with('error', 'The deadline for this assignment has passed.');
+            // Optional: allow late submissions but mark them
         }
 
         $assignment->submissions()->create([
             'user_id' => Auth::id(),
             'content' => $request->input('content'),
             'files' => $request->input('files') ?? [],
+            'submitted_at' => now(),
         ]);
 
         return back()->with('success', 'Assignment submitted successfully!');
+    }
+
+    public function update(Request $request, \App\Models\Classroom $classroom, Assignment $assignment, Submission $submission)
+    {
+        if ($submission->user_id !== Auth::id()) {
+            abort(403);
+        }
+
+        $request->validate([
+            'content' => 'nullable|string',
+            'files' => 'nullable|array|max:10',
+        ]);
+
+        $submission->update([
+            'content' => $request->input('content'),
+            'files' => $request->input('files') ?? [],
+        ]);
+
+        return back()->with('success', 'Submission updated successfully!');
+    }
+
+    public function destroy(\App\Models\Classroom $classroom, Assignment $assignment, Submission $submission)
+    {
+        if ($submission->user_id !== Auth::id()) {
+            abort(403);
+        }
+
+        $submission->delete();
+        return back()->with('success', 'Submission removed.');
     }
 }

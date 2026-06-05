@@ -59,6 +59,16 @@
             --glass-bg: rgba(15, 23, 42, 0.7);
         }
 
+        /* Dark Mode Utility Fixes */
+        [data-bs-theme="dark"] .text-main { color: var(--text-color) !important; }
+        [data-bs-theme="dark"] .bg-light-subtle, 
+        [data-bs-theme="dark"] .bg-light { 
+            background-color: rgba(255, 255, 255, 0.05) !important; 
+            color: var(--text-color) !important;
+        }
+        [data-bs-theme="dark"] .card { background-color: var(--card-bg); }
+        [data-bs-theme="dark"] .border-dashed { border-color: var(--border-color) !important; }
+
         body {
             font-family: 'Plus Jakarta Sans', sans-serif;
             background-color: var(--bg-color);
@@ -67,6 +77,9 @@
             overflow-x: hidden;
             letter-spacing: -0.01em;
         }
+
+        .text-main { color: var(--text-color); }
+        .text-muted { color: var(--text-muted); }
 
         /* Premium Scrollbar */
         ::-webkit-scrollbar { width: 8px; }
@@ -84,7 +97,7 @@
             background-color: var(--sidebar-bg);
             border-right: 1px solid var(--border-color);
             padding: 32px 24px;
-            z-index: 1050;
+            z-index: 1030;
             transition: var(--transition);
         }
 
@@ -187,6 +200,7 @@
             border-radius: 14px;
             padding: 12px 16px;
             font-weight: 500;
+            color: var(--text-color);
             transition: var(--transition);
         }
 
@@ -270,6 +284,7 @@
             border-color: var(--primary-color);
             background: var(--card-bg);
             box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+            animation: pulse-glow 1.8s ease-in-out 1;
         }
 
         .search-bar-luxury input {
@@ -297,6 +312,39 @@
             border-color: var(--primary-color);
             color: var(--primary-color);
             background: var(--sidebar-hover);
+            transform: scale(1.1) rotate(-5deg);
+        }
+
+        /* Luxury Light/Glass Button */
+        .btn-luxury-light {
+            background: var(--bg-color);
+            border: 1.5px solid var(--border-color);
+            color: var(--text-color);
+            padding: 10px 24px;
+            border-radius: 14px;
+            font-weight: 700;
+            transition: var(--transition);
+        }
+
+        .btn-luxury-light:hover {
+            background: var(--sidebar-hover);
+            border-color: var(--primary-color);
+            color: var(--primary-color);
+            transform: translateY(-2px);
+        }
+
+        .btn-luxury-light:active { transform: scale(0.96); }
+
+        /* Bootstrap light button override for dark mode */
+        [data-bs-theme="dark"] .btn-light {
+            background-color: rgba(255, 255, 255, 0.05) !important;
+            border-color: rgba(255, 255, 255, 0.1) !important;
+            color: #fff !important;
+        }
+        [data-bs-theme="dark"] .btn-light:hover {
+            background-color: rgba(255, 255, 255, 0.1) !important;
+            border-color: var(--primary-color) !important;
+            color: #fff !important;
         }
 
         /* ============================================================
@@ -856,7 +904,7 @@
     <!-- Sidebar (Desktop) -->
     <aside class="sidebar">
         <a href="{{ route('dashboard') }}" class="logo-text d-flex align-items-center gap-2">
-            <i data-lucide="layers" class="text-primary" style="width:32px;height:32px"></i>
+            <img src="{{ asset('assets/logo/sponlogoonly.png') }}" alt="Logo" style="width:32px;height:32px;object-fit:contain">
             Spon++
         </a>
         
@@ -875,7 +923,7 @@
         <div class="mt-auto" style="position: absolute; bottom: 40px; width: calc(100% - 48px);">
             <div class="p-3 rounded-4 bg-light-subtle border mb-4">
                 <div class="d-flex align-items-center gap-3">
-                    <img src="https://ui-avatars.com/api/?name={{ urlencode(auth()->user()->name) }}&background=6366f1&color=fff" class="rounded-circle shadow-sm" width="40" height="40">
+                    <img src="{{ auth()->user()->avatar_path ? asset('storage/' . auth()->user()->avatar_path) : 'https://ui-avatars.com/api/?name=' . urlencode(auth()->user()->name) . '&background=6366f1&color=fff' }}" class="rounded-circle shadow-sm object-fit-cover" width="40" height="40">
                     <div class="overflow-hidden">
                         <div class="fw-bold small text-truncate">{{ auth()->user()->name }}</div>
                         <div class="text-muted smaller">@<span></span>{{ auth()->user()->username }}</div>
@@ -915,20 +963,32 @@
         <!-- Topbar -->
         <header class="topbar">
             <!-- Mobile Logo -->
-            <a href="{{ route('dashboard') }}" class="logo-text d-lg-none">S</a>
+            <a href="{{ route('dashboard') }}" class="logo-text d-lg-none">
+                <img src="{{ asset('assets/logo/sponlogoonly.png') }}" alt="S" style="width:30px;height:30px;object-fit:contain">
+            </a>
             
-            <div class="search-bar-luxury d-none d-md-flex">
+            <form action="{{ route('search') }}" method="GET" class="search-bar-luxury d-none d-md-flex">
                 <i data-lucide="search" size="18" class="text-muted"></i>
-                <input type="text" placeholder="Search for assignments, classes, or people...">
-            </div>
+                <input type="text" name="q" placeholder="Search assignment, class, or people..." value="{{ request('q') }}" autocomplete="off">
+            </form>
             
             <div class="d-flex align-items-center gap-3">
                 <button class="icon-btn-luxury" onclick="toggleTheme()" title="Toggle Theme">
                     <i data-lucide="moon" id="theme-icon"></i>
                 </button>
-                <button class="icon-btn-luxury position-relative">
+                <div class="dropdown d-none"> <!-- Hidden old dropdown trigger -->
+                    <button class="icon-btn-luxury position-relative" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i data-lucide="bell" size="20"></i>
+                    </button>
+                </div>
+
+                <button class="icon-btn-luxury position-relative" type="button" data-bs-toggle="offcanvas" data-bs-target="#notificationSidebar" aria-controls="notificationSidebar">
                     <i data-lucide="bell" size="20"></i>
-                    <span class="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle"></span>
+                    @if(auth()->user()->unreadNotifications->count() > 0)
+                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger border border-2 border-white p-1" style="font-size: 0.6rem;">
+                            {{ auth()->user()->unreadNotifications->count() }}
+                        </span>
+                    @endif
                 </button>
             </div>
         </header>
@@ -936,6 +996,64 @@
         <main class="page-enter">
             @yield('content')
         </main>
+    </div>
+
+    <!-- Notification Sidebar (Offcanvas) -->
+    <div class="offcanvas offcanvas-end border-0 shadow-lg" tabindex="-1" id="notificationSidebar" aria-labelledby="notificationSidebarLabel" style="width: 400px; background: var(--bg-color);">
+        <div class="offcanvas-header bg-primary text-white p-4">
+            <h5 class="offcanvas-title fw-extrabold" id="notificationSidebarLabel">Notifications</h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+        </div>
+        <div class="offcanvas-body p-0">
+            <div class="p-4 border-bottom bg-light-subtle d-flex justify-content-between align-items-center">
+                <span class="smaller fw-bold text-muted">{{ auth()->user()->unreadNotifications->count() }} Unread</span>
+                @if(auth()->user()->unreadNotifications->count() > 0)
+                    <form action="{{ route('notifications.read-all') }}" method="POST">
+                        @csrf
+                        <button type="submit" class="btn btn-link btn-sm text-primary text-decoration-none p-0 smallest fw-bold">Mark all as read</button>
+                    </form>
+                @endif
+            </div>
+
+            <div class="notification-scroll-area" style="height: calc(100vh - 160px); overflow-y: auto;">
+                @forelse(auth()->user()->notifications()->latest()->take(20)->get() as $notification)
+                    <a href="{{ route('courses.show', $notification->data['classroom_id']) }}" class="text-decoration-none block p-4 border-bottom hover-bg-light transition-all d-block @if($notification->unread()) bg-primary-soft @endif">
+                        <div class="d-flex gap-3">
+                            <div class="rounded-circle bg-primary-soft text-primary p-2 flex-shrink-0" style="width: 45px; height: 45px; display: grid; place-items: center;">
+                                @php
+                                    $icon = match($notification->data['type'] ?? '') {
+                                        'assignment' => 'file-text',
+                                        'material' => 'book-open',
+                                        'announcement' => 'megaphone',
+                                        default => 'bell'
+                                    };
+                                @endphp
+                                <i data-lucide="{{ $icon }}" size="20"></i>
+                            </div>
+                            <div class="overflow-hidden">
+                                <div class="smaller fw-extrabold text-main mb-1">{{ $notification->data['message'] }}</div>
+                                <div class="smallest text-muted d-flex align-items-center gap-2 mt-1">
+                                    <span class="badge bg-primary-soft text-primary rounded-pill px-2">{{ $notification->data['type'] }}</span>
+                                    <span>{{ $notification->created_at->diffForHumans() }}</span>
+                                </div>
+                                <div class="smallest text-primary fw-bold mt-2 d-flex align-items-center gap-1">
+                                    <i data-lucide="layers" size="12"></i>
+                                    {{ $notification->data['classroom_name'] }}
+                                </div>
+                            </div>
+                        </div>
+                    </a>
+                @empty
+                    <div class="p-5 text-center mt-5">
+                        <div class="bg-light-subtle rounded-circle d-inline-flex p-4 mb-4">
+                            <i data-lucide="bell-off" class="text-muted opacity-25" size="64"></i>
+                        </div>
+                        <h5 class="fw-bold text-muted">All caught up!</h5>
+                        <p class="text-muted small">No new notifications at the moment.</p>
+                    </div>
+                @endforelse
+            </div>
+        </div>
     </div>
 
     <!-- Confirm Modal -->

@@ -31,8 +31,8 @@
                     </div>
                 </div>
                 <div class="modal-footer border-0 px-5 pb-5 pt-0">
-                    <button type="button" class="btn btn-light rounded-pill px-4 fw-bold" data-bs-dismiss="modal">Discard</button>
-                    <button type="submit" class="btn btn-primary rounded-pill px-5 fw-bold shadow">Deploy Classroom</button>
+                    <button type="button" class="btn btn-luxury-light rounded-pill px-4 fw-bold btn-ripple" data-bs-dismiss="modal" onclick="addRipple(event, this)">Discard</button>
+                    <button type="submit" class="btn btn-primary rounded-pill px-5 fw-bold shadow btn-ripple" onclick="addRipple(event, this)">Deploy Classroom</button>
                 </div>
             </form>
         </div>
@@ -67,8 +67,8 @@
                     </div>
                 </div>
                 <div class="modal-footer border-0 px-5 pb-5 pt-2 justify-content-center">
-                    <button type="submit" class="btn btn-primary rounded-pill px-5 py-3 fw-bold shadow w-100 mb-2">Initialize Entry</button>
-                    <button type="button" class="btn btn-link text-decoration-none text-muted smaller fw-bold" data-bs-dismiss="modal">Cancel Request</button>
+                    <button type="submit" class="btn btn-primary rounded-pill px-5 py-3 fw-bold shadow w-100 mb-2 btn-ripple" onclick="addRipple(event, this)">Initialize Entry</button>
+                    <button type="button" class="btn btn-link text-decoration-none text-muted smaller fw-bold btn-ripple" data-bs-dismiss="modal" onclick="addRipple(event, this)">Cancel Request</button>
                 </div>
             </form>
         </div>
