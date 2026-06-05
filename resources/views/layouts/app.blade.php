@@ -18,9 +18,9 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js"></script>
 
-    <!-- Dropzone.js (Safari Compatible CDN) -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/dropzone@6.0.0/dist/dropzone.css">
-    <script src="https://cdn.jsdelivr.net/npm/dropzone@6.0.0/dist/dropzone.umd.min.js"></script>
+    <!-- Dropzone.js (Stable Version) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/dropzone/5.9.3/dropzone.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dropzone/5.9.3/dropzone.min.js"></script>
     <script>Dropzone.autoDiscover = false;</script>
 
     <!-- TinyMCE (Safari Compatible CDN) -->
@@ -298,6 +298,556 @@
             color: var(--primary-color);
             background: var(--sidebar-hover);
         }
+
+        /* ============================================================
+           SPON++ — Animation & Motion Layer
+           ============================================================ */
+
+        /* ── 1. KEYFRAMES ─────────────────────────────────────────── */
+
+        @keyframes fadeSlideUp {
+            from { opacity: 0; transform: translateY(18px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes fadeSlideIn {
+            from { opacity: 0; transform: translateX(-14px); }
+            to   { opacity: 1; transform: translateX(0); }
+        }
+
+        @keyframes sidebarItemIn {
+            from { opacity: 0; transform: translateX(-20px); }
+            to   { opacity: 1; transform: translateX(0); }
+        }
+
+        @keyframes topbarSlideDown {
+            from { opacity: 0; transform: translateY(-24px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes pulse-glow {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(var(--primary-rgb), 0); }
+            50%       { box-shadow: 0 0 0 8px rgba(var(--primary-rgb), 0.12); }
+        }
+
+        @keyframes shimmer {
+            0%   { background-position: -600px 0; }
+            100% { background-position: 600px 0; }
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        @keyframes ripple {
+            to { transform: scale(4); opacity: 0; }
+        }
+
+        @keyframes tabIndicatorSlide {
+            from { transform: scaleX(0); }
+            to   { transform: scaleX(1); }
+        }
+
+        @keyframes badgePop {
+            0%   { transform: scale(0.5); opacity: 0; }
+            70%  { transform: scale(1.25); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        @keyframes logoGlow {
+            0%, 100% { filter: drop-shadow(0 0 0px rgba(var(--primary-rgb), 0)); }
+            50%       { filter: drop-shadow(0 0 10px rgba(var(--primary-rgb), 0.5)); }
+        }
+
+        @keyframes cardEntrance {
+            from { opacity: 0; transform: translateY(24px) scale(0.97); }
+            to   { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        @keyframes selectPop {
+            0%   { transform: scale(0.97); opacity: 0.6; }
+            60%  { transform: scale(1.02); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        @keyframes bottomNavIn {
+            from { opacity: 0; transform: translateY(30px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+
+        /* ── 2. SIDEBAR ───────────────────────────────────────────── */
+
+        /* Sidebar slides in from left on load */
+        .sidebar {
+            animation: fadeSlideIn 0.45s cubic-bezier(0.16, 1, 0.3, 1) both;
+        }
+
+        /* Logo subtle breathing glow */
+        .logo-text {
+            animation: logoGlow 3.5s ease-in-out infinite;
+            transition: var(--transition), letter-spacing 0.3s;
+        }
+
+        .logo-text:hover {
+            letter-spacing: -0.01em;
+        }
+
+        /* Each nav link staggers in */
+        .nav-link-custom {
+            animation: sidebarItemIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .nav-link-custom:nth-child(1) { animation-delay: 0.08s; }
+        .nav-link-custom:nth-child(2) { animation-delay: 0.15s; }
+        .nav-link-custom:nth-child(3) { animation-delay: 0.22s; }
+        .nav-link-custom:nth-child(4) { animation-delay: 0.29s; }
+        .nav-link-custom:nth-child(5) { animation-delay: 0.36s; }
+
+        /* Active nav link gets a left accent bar */
+        .nav-link-custom.active::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 20%;
+            height: 60%;
+            width: 3px;
+            border-radius: 0 3px 3px 0;
+            background: var(--primary-color);
+            animation: fadeSlideIn 0.3s ease both;
+        }
+
+        /* Ripple on nav link click */
+        .nav-link-custom::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle, rgba(var(--primary-rgb), 0.15) 10%, transparent 70%);
+            transform: scale(0);
+            opacity: 0;
+            border-radius: inherit;
+            transition: transform 0.5s, opacity 0.5s;
+        }
+
+        .nav-link-custom:active::after {
+            transform: scale(2.5);
+            opacity: 1;
+            transition: 0s;
+        }
+
+        /* Icon micro-bounce on hover */
+        .nav-link-custom:hover i,
+        .nav-link-custom.active i {
+            animation: badgePop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+        }
+
+        /* Sidebar user card fade-up */
+        .sidebar .mt-auto > div {
+            animation: fadeSlideUp 0.5s 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+        }
+
+
+        /* ── 3. TOPBAR ────────────────────────────────────────────── */
+
+        .topbar {
+            animation: topbarSlideDown 0.45s cubic-bezier(0.16, 1, 0.3, 1) both;
+            position: relative;
+        }
+
+        /* Topbar subtle shimmer border on hover */
+        .topbar::after {
+            content: '';
+            position: absolute;
+            inset: -1px;
+            border-radius: 21px;
+            background: linear-gradient(90deg,
+                transparent 0%,
+                rgba(var(--primary-rgb), 0.25) 50%,
+                transparent 100%
+            );
+            background-size: 300% 100%;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.4s;
+            z-index: -1;
+        }
+
+        .topbar:hover::after {
+            opacity: 1;
+            animation: shimmer 2s linear infinite;
+        }
+
+        /* Search bar focus pulse */
+        .search-bar-luxury:focus-within {
+            animation: pulse-glow 1.8s ease-in-out 1;
+        }
+
+        /* Icon buttons: springy hover */
+        .icon-btn-luxury {
+            transition: var(--transition), transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .icon-btn-luxury:hover {
+            transform: scale(1.1) rotate(-5deg);
+        }
+
+        .icon-btn-luxury:active {
+            transform: scale(0.92);
+        }
+
+        /* Notification badge pop */
+        .icon-btn-luxury .position-absolute {
+            animation: badgePop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) 0.6s both;
+        }
+
+
+        /* ── 4. CARDS ─────────────────────────────────────────────── */
+
+        /* Cards enter with stagger — apply .anim-card class to your card elements,
+           or use the nth-child auto-stagger below */
+        .card,
+        [class*="card-"] {
+            animation: cardEntrance 0.45s cubic-bezier(0.16, 1, 0.3, 1) both;
+            transition: var(--transition), box-shadow 0.25s, transform 0.25s;
+        }
+
+        /* Stagger up to 8 cards on the same page */
+        .card:nth-child(1), [class*="card-"]:nth-child(1) { animation-delay: 0.05s; }
+        .card:nth-child(2), [class*="card-"]:nth-child(2) { animation-delay: 0.10s; }
+        .card:nth-child(3), [class*="card-"]:nth-child(3) { animation-delay: 0.15s; }
+        .card:nth-child(4), [class*="card-"]:nth-child(4) { animation-delay: 0.20s; }
+        .card:nth-child(5), [class*="card-"]:nth-child(5) { animation-delay: 0.25s; }
+        .card:nth-child(6), [class*="card-"]:nth-child(6) { animation-delay: 0.30s; }
+        .card:nth-child(7), [class*="card-"]:nth-child(7) { animation-delay: 0.35s; }
+        .card:nth-child(8), [class*="card-"]:nth-child(8) { animation-delay: 0.40s; }
+
+        .card:hover,
+        [class*="card-"]:hover {
+            transform: translateY(-4px) scale(1.01);
+            box-shadow: 0 16px 40px -8px rgba(var(--primary-rgb), 0.18);
+        }
+
+        .card:active,
+        [class*="card-"]:active {
+            transform: translateY(-1px) scale(0.99);
+        }
+
+
+        /* ── 5. BUTTONS ───────────────────────────────────────────── */
+
+        /* Ripple wrapper — add class `btn-ripple` to any button for the effect */
+        .btn-ripple {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-ripple .ripple-circle {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.35);
+            transform: scale(0);
+            animation: ripple 0.6s linear;
+            pointer-events: none;
+            margin: -20px 0 0 -20px;
+        }
+
+        /* Primary button: shimmer sweep on hover */
+        .btn-primary {
+            position: relative;
+            overflow: hidden;
+            transition: var(--transition), transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .btn-primary::before {
+            content: '';
+            position: absolute;
+            top: 0; left: -100%;
+            width: 60%;
+            height: 100%;
+            background: linear-gradient(120deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .btn-primary:hover::before { left: 150%; }
+
+        .btn-primary:active {
+            transform: scale(0.96) translateY(1px) !important;
+        }
+
+        /* Secondary / outline buttons */
+        .btn-outline-primary,
+        .btn-outline-secondary {
+            transition: var(--transition), transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .btn-outline-primary:hover,
+        .btn-outline-secondary:hover {
+            transform: translateY(-2px);
+        }
+
+        .btn-outline-primary:active,
+        .btn-outline-secondary:active {
+            transform: scale(0.96);
+        }
+
+
+        /* ── 6. LOADING SKELETON ──────────────────────────────────── */
+
+        .skeleton {
+            border-radius: 10px;
+            background: linear-gradient(
+                90deg,
+                var(--border-color) 25%,
+                rgba(var(--primary-rgb), 0.08) 50%,
+                var(--border-color) 75%
+            );
+            background-size: 600px 100%;
+            animation: shimmer 1.6s infinite linear;
+        }
+
+        .skeleton-text  { height: 14px; width: 80%; margin-bottom: 10px; }
+        .skeleton-title { height: 22px; width: 55%; margin-bottom: 14px; }
+        .skeleton-thumb { height: 180px; width: 100%; border-radius: 16px; }
+        .skeleton-avatar {
+            width: 42px; height: 42px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+        .skeleton-badge { height: 28px; width: 80px; border-radius: 50px; }
+
+        /* Full-screen page loader overlay */
+        .page-loader {
+            position: fixed;
+            inset: 0;
+            background: var(--bg-color);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 18px;
+            z-index: 9999;
+            transition: opacity 0.5s, visibility 0.5s;
+        }
+
+        .page-loader.hidden {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+        }
+
+        .loader-spinner {
+            width: 44px;
+            height: 44px;
+            border: 3px solid var(--border-color);
+            border-top-color: var(--primary-color);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        .loader-dots {
+            display: flex;
+            gap: 8px;
+        }
+
+        .loader-dots span {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--primary-color);
+            animation: pulse-glow 1.2s ease-in-out infinite;
+        }
+
+        .loader-dots span:nth-child(2) { animation-delay: 0.2s; }
+        .loader-dots span:nth-child(3) { animation-delay: 0.4s; }
+
+
+        /* ── 7. TABS ──────────────────────────────────────────────── */
+
+        .nav-tabs {
+            position: relative;
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        .nav-tabs .nav-link {
+            color: var(--text-muted);
+            font-weight: 600;
+            border: none;
+            border-bottom: 2px solid transparent;
+            margin-bottom: -2px;
+            padding: 10px 20px;
+            border-radius: 0;
+            transition: color 0.25s, border-color 0.25s;
+        }
+
+        .nav-tabs .nav-link:hover {
+            color: var(--primary-color);
+        }
+
+        .nav-tabs .nav-link.active {
+            color: var(--primary-color);
+            background: transparent;
+            border-bottom-color: var(--primary-color);
+            animation: tabIndicatorSlide 0.25s cubic-bezier(0.16, 1, 0.3, 1) both;
+        }
+
+        .nav-pills .nav-link {
+            color: var(--text-muted);
+            font-weight: 600;
+            border-radius: 12px;
+            transition: var(--transition);
+        }
+
+        .nav-pills .nav-link:hover {
+            background: var(--sidebar-hover);
+            color: var(--primary-color);
+        }
+
+        .nav-pills .nav-link.active {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: #fff;
+            animation: selectPop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+            box-shadow: 0 4px 14px rgba(var(--primary-rgb), 0.3);
+        }
+
+        .tab-content .tab-pane.active {
+            animation: fadeSlideUp 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
+        }
+
+
+        /* ── 8. SELECTION / CHECKBOXES / RADIOS ───────────────────── */
+
+        .form-check-input {
+            transition: var(--transition), transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .form-check-input:checked {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+            transform: scale(1.15);
+            box-shadow: 0 0 0 4px rgba(var(--primary-rgb), 0.15);
+        }
+
+        .form-check-input:focus {
+            box-shadow: 0 0 0 4px rgba(var(--primary-rgb), 0.15);
+            border-color: var(--primary-color);
+        }
+
+        .form-select:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 4px rgba(var(--primary-rgb), 0.1);
+            animation: selectPop 0.25s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+        }
+
+
+        /* ── 9. BOTTOM NAV (mobile) ───────────────────────────────── */
+
+        .bottom-nav {
+            animation: bottomNavIn 0.5s 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
+        }
+
+        .bottom-link {
+            transition: var(--transition), transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .bottom-link:hover {
+            transform: translateY(-4px);
+        }
+
+        .bottom-link.active {
+            animation: badgePop 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+        }
+
+
+        /* ── 10. TOASTS ───────────────────────────────────────────── */
+
+        @keyframes slideInToast {
+            from { transform: translateX(110%) scale(0.9); opacity: 0; }
+            to   { transform: translateX(0) scale(1); opacity: 1; }
+        }
+
+        .toast-premium {
+            animation: slideInToast 0.4s cubic-bezier(0.23, 1, 0.32, 1) both;
+            transition: opacity 0.3s, transform 0.3s;
+        }
+
+
+        /* ── 11. MODAL ENTRANCE ───────────────────────────────────── */
+
+        .modal.show .modal-dialog {
+            animation: fadeSlideUp 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
+        }
+
+
+        /* ── 12. FORM INPUTS ──────────────────────────────────────── */
+
+        .form-control:focus {
+            animation: pulse-glow 1.5s ease-in-out 1;
+        }
+
+        /* Label float effect: wrap input + label in .float-label-group */
+        .float-label-group {
+            position: relative;
+        }
+
+        .float-label-group label {
+            position: absolute;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+            font-size: 0.875rem;
+            font-weight: 500;
+            pointer-events: none;
+            transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+            background: var(--card-bg);
+            padding: 0 4px;
+        }
+
+        .float-label-group input:focus ~ label,
+        .float-label-group input:not(:placeholder-shown) ~ label {
+            top: 0;
+            font-size: 0.72rem;
+            color: var(--primary-color);
+            transform: translateY(-50%);
+        }
+
+
+        /* ── 13. PAGE CONTENT STAGGER ─────────────────────────────── */
+
+        .page-enter > * {
+            animation: fadeSlideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+        }
+
+        .page-enter > *:nth-child(1) { animation-delay: 0.0s; }
+        .page-enter > *:nth-child(2) { animation-delay: 0.06s; }
+        .page-enter > *:nth-child(3) { animation-delay: 0.12s; }
+        .page-enter > *:nth-child(4) { animation-delay: 0.18s; }
+        .page-enter > *:nth-child(5) { animation-delay: 0.24s; }
+        .page-enter > *:nth-child(6) { animation-delay: 0.30s; }
+
+
+        /* ── 14. THEME TRANSITION ─────────────────────────────────── */
+
+        *, *::before, *::after {
+            transition:
+                background-color 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+                border-color     0.35s cubic-bezier(0.16, 1, 0.3, 1),
+                color            0.25s ease,
+                box-shadow       0.25s ease;
+        }
+
+        .btn, .nav-link-custom, .card, .icon-btn-luxury, .bottom-link {
+            transition: var(--transition),
+                transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1),
+                box-shadow 0.25s,
+                background-color 0.35s,
+                border-color 0.35s,
+                color 0.25s;
+        }
     </style>
     @stack('styles')
 </head>
@@ -376,7 +926,6 @@
                 <button class="icon-btn-luxury" onclick="toggleTheme()" title="Toggle Theme">
                     <i data-lucide="moon" id="theme-icon"></i>
                 </button>
-                <div class="vr mx-2 d-none d-md-block" style="height: 24px; opacity: 0.1;"></div>
                 <button class="icon-btn-luxury position-relative">
                     <i data-lucide="bell" size="20"></i>
                     <span class="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle"></span>
@@ -384,7 +933,7 @@
             </div>
         </header>
 
-        <main>
+        <main class="page-enter">
             @yield('content')
         </main>
     </div>
@@ -400,7 +949,7 @@
                     <h4 class="fw-bold mb-3" id="confirmTitle">Are you sure?</h4>
                     <p class="text-muted mb-4" id="confirmMessage">This action cannot be undone.</p>
                     <div class="d-grid gap-2">
-                        <button type="button" class="btn btn-danger py-3 fw-bold rounded-4" id="confirmActionBtn">Confirm</button>
+                        <button type="button" class="btn btn-danger py-3 fw-bold rounded-4 btn-ripple" id="confirmActionBtn" onclick="addRipple(event, this)">Confirm</button>
                         <button type="button" class="btn btn-light py-3 fw-bold rounded-4" data-bs-dismiss="modal">Cancel</button>
                     </div>
                 </div>
@@ -413,6 +962,17 @@
     <script>
         // Init Lucide
         lucide.createIcons();
+
+        // Ripple Effect
+        function addRipple(e, btn) {
+            const circle = document.createElement('span');
+            circle.className = 'ripple-circle';
+            const rect = btn.getBoundingClientRect();
+            circle.style.left = (e.clientX - rect.left) + 'px';
+            circle.style.top  = (e.clientY - rect.top)  + 'px';
+            btn.appendChild(circle);
+            circle.addEventListener('animationend', () => circle.remove());
+        }
 
         // Theme Handling
         (function() {
@@ -433,6 +993,7 @@
 
         function updateThemeIcon(theme) {
             const icon = document.getElementById('theme-icon');
+            if(!icon) return;
             if(theme === 'dark') {
                 icon.setAttribute('data-lucide', 'sun');
             } else {
@@ -471,11 +1032,12 @@
             document.getElementById('confirmMessage').textContent = message;
             const btn = document.getElementById('confirmActionBtn');
             btn.textContent = btnText || 'Confirm';
-            btn.className = `btn py-3 fw-bold rounded-4 ${btnClass || 'btn-danger'}`;
+            btn.className = `btn py-3 fw-bold rounded-4 btn-ripple ${btnClass || 'btn-danger'}`;
             
-            btn.onclick = () => {
+            btn.onclick = (e) => {
+                addRipple(e, btn);
                 onConfirm();
-                modal.hide();
+                setTimeout(() => modal.hide(), 200);
             };
             modal.show();
         }
@@ -491,6 +1053,12 @@
                 }
             });
         }
+
+        // Page Entrance Animation - Children stagger automatically
+        window.addEventListener('DOMContentLoaded', () => {
+            const page = document.querySelector('.page-enter');
+            if(page) page.classList.add('active'); // CSS doesn't strictly need .active based on provided CSS but good practice
+        });
 
         // Flash Messages
         @if(session('success')) showToast("{{ session('success') }}", 'success'); @endif

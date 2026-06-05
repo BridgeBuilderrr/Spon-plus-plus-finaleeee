@@ -96,10 +96,21 @@ class ClassroomController extends Controller
         // Update last accessed
         $classroom->users()->updateExistingPivot(Auth::id(), ['last_accessed_at' => now()]);
 
-        $announcements = $classroom->announcements()->with('user', 'comments.user')->latest()->get();
-        $assignments = $classroom->assignments()->latest()->limit(5)->get();
+        // Increase sort buffer for this session to handle large activity sorting if needed
+        try {
+            \Illuminate\Support\Facades\DB::statement('SET SESSION sort_buffer_size = 1048576 * 4'); // 4MB
+        } catch (\Exception $e) {}
 
-        return view('courses.show', compact('classroom', 'announcements', 'assignments'));
+        // Eager load everything needed for the stream and sidebar
+        $classroom->load([
+            'announcements.user', 
+            'announcements.comments.user', 
+            'assignments.submissions',
+            'materials',
+            'teacher'
+        ]);
+
+        return view('courses.show', compact('classroom'));
     }
 
     public function people(Classroom $classroom)

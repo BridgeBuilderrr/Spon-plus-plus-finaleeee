@@ -14,22 +14,26 @@ class UserSeeder extends Seeder
     public function run(): void
     {
         // Primary Teachers
-        User::create([
-            'name' => 'Ariel Baru',
-            'username' => 'arielkinosaki',
-            'email' => 'ariel@spon.test',
-            'password' => Hash::make('password'),
-            'role' => 'Teacher',
-            'bio' => 'Lead Educator at Spon++. Specialist in Modern Web Tech.',
-        ]);
+        User::updateOrCreate(
+            ['username' => 'arielkinosaki'],
+            [
+                'name' => 'Ariel Baru',
+                'email' => 'ariel@spon.test',
+                'password' => Hash::make('password'),
+                'role' => 'Teacher',
+                'bio' => 'Lead Educator at Spon++. Specialist in Modern Web Tech.',
+            ]
+        );
 
-        User::create([
-            'name' => 'Spon++ Master',
-            'username' => 'sponmaster',
-            'email' => 'admin@spon.test',
-            'password' => Hash::make('password'),
-            'role' => 'Teacher',
-        ]);
+        User::updateOrCreate(
+            ['username' => 'sponmaster'],
+            [
+                'name' => 'Spon++ Master',
+                'email' => 'admin@spon.test',
+                'password' => Hash::make('password'),
+                'role' => 'Teacher',
+            ]
+        );
 
         // More Teachers
         $teachers = [
@@ -39,13 +43,15 @@ class UserSeeder extends Seeder
         ];
 
         foreach ($teachers as $t) {
-            User::create([
-                'name' => $t['name'],
-                'username' => $t['username'],
-                'email' => $t['username'] . '@spon.test',
-                'password' => Hash::make('password'),
-                'role' => 'Teacher',
-            ]);
+            User::updateOrCreate(
+                ['username' => $t['username']],
+                [
+                    'name' => $t['name'],
+                    'email' => $t['username'] . '@spon.test',
+                    'password' => Hash::make('password'),
+                    'role' => 'Teacher',
+                ]
+            );
         }
 
         // Many Members (approx 20+)
@@ -73,13 +79,15 @@ class UserSeeder extends Seeder
         ];
 
         foreach ($members as $m) {
-            User::create([
-                'name' => $m['name'],
-                'username' => $m['username'],
-                'email' => $m['username'] . '@spon.test',
-                'password' => Hash::make('password'),
-                'role' => 'Member',
-            ]);
+            User::updateOrCreate(
+                ['username' => $m['username']],
+                [
+                    'name' => $m['name'],
+                    'email' => $m['username'] . '@spon.test',
+                    'password' => Hash::make('password'),
+                    'role' => 'Member',
+                ]
+            );
         }
     }
 }

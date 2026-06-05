@@ -207,18 +207,22 @@
                                 @if(!empty($activity->files))
                                     <div class="row g-3 mb-4">
                                         @foreach($activity->files as $file)
-                                            @php $f = json_decode($file, true); @endphp
+                                            @php 
+                                                $f = is_array($file) ? $file : json_decode($file, true); 
+                                            @endphp
+                                            @if(is_array($f) && isset($f['path']))
                                             <div class="col-md-6 col-xl-4 font-jakarta">
                                                 <a href="{{ route('download.file', ['path' => $f['path'], 'assignment_id' => isset($activity->due_date) ? $activity->id : null]) }}" class="attachment-luxury-card d-flex align-items-center gap-3 p-3 text-decoration-none">
                                                     <div class="p-2 bg-light rounded-3">
                                                        <i data-lucide="file" class="text-primary" size="20"></i>
                                                     </div>
                                                     <div class="overflow-hidden">
-                                                        <div class="fw-bold small text-main text-truncate">{{ $f['name'] }}</div>
-                                                        <div class="text-muted smallest">{{ round($f['size']/1024/1024, 2) }} MB</div>
+                                                        <div class="fw-bold small text-main text-truncate">{{ $f['name'] ?? 'File' }}</div>
+                                                        <div class="text-muted smallest">{{ isset($f['size']) ? round($f['size']/1024/1024, 2) : '0' }} MB</div>
                                                     </div>
                                                 </a>
                                             </div>
+                                            @endif
                                         @endforeach
                                     </div>
                                 @endif
@@ -236,7 +240,7 @@
                                                     <i data-lucide="check" size="14" class="me-2"></i> Handed In
                                                 </span>
                                             @else
-                                                <button class="btn btn-primary rounded-pill px-4 py-2 fw-extrabold shadow-sm" data-bs-toggle="modal" data-bs-target="#submitAssignmentModal{{ $activity->id }}">
+                                                <button class="btn btn-primary rounded-pill px-4 py-2 fw-extrabold shadow-sm btn-ripple" data-bs-toggle="modal" data-bs-target="#submitAssignmentModal{{ $activity->id }}" onclick="addRipple(event, this)">
                                                     Turn In Now
                                                 </button>
                                             @endif
@@ -263,13 +267,15 @@
                                             </div>
                                         @endforeach
                                     </div>
-                                    <form action="{{ route('comments.store', $classroom) }}" method="POST" class="d-flex gap-3 align-items-center ajax-comment-form">
+                                    <form action="{{ route('comments.store', $classroom) }}" method="POST" class="ajax-comment-form">
                                         @csrf
                                         <input type="hidden" name="commentable_id" value="{{ $activity->id }}">
                                         <input type="hidden" name="commentable_type" value="{{ get_class($activity) }}">
-                                        <div class="input-group luxury-comment-input flex-grow-1">
-                                            <input type="text" name="content" class="form-control border-0 bg-transparent px-4 py-3 shadow-none" placeholder="Add a public comment..." required>
-                                            <button class="btn btn-primary rounded-circle m-1" type="submit" style="width: 44px; height: 44px;"><i data-lucide="send" size="18"></i></button>
+                                        <div class="comment-input-wrap">
+                                            <input type="text" name="content" class="comment-input" placeholder="Add a public comment..." autocomplete="off" required>
+                                            <button type="submit" class="comment-send-btn btn-ripple" onclick="addRipple(event, this)">
+                                                <i data-lucide="send" style="width:16px;height:16px;transform:translate(-1px,1px)"></i>
+                                            </button>
                                         </div>
                                     </form>
                                 </div>
@@ -610,10 +616,21 @@
                 maxFiles: 10,
                 autoProcessQueue: true,
                 addRemoveLinks: true,
-                dictRemoveFile: "Remove",
+                dictRemoveFile: "✕",
                 headers: { 'X-CSRF-TOKEN': "{{ csrf_token() }}" },
                 paramName: "file",
-                clickable: true
+                clickable: true,
+                previewTemplate: `
+                    <div class="dz-preview dz-file-preview">
+                        <div class="dz-image"><img data-dz-thumbnail /></div>
+                        <div class="dz-details">
+                            <div class="dz-filename"><span data-dz-name></span></div>
+                            <div class="dz-size"><span data-dz-size></span></div>
+                        </div>
+                        <div class="dz-progress"><span class="dz-upload" data-dz-uploadprogress></span></div>
+                        <div class="dz-error-message"><span data-dz-errormessage></span></div>
+                    </div>
+                `
             });
 
             dz.on("success", (file, response) => {
@@ -631,7 +648,9 @@
                     const mockFile = { name: fileData.name, size: fileData.size, status: Dropzone.ADDED, accepted: true };
                     
                     dz.emit("addedfile", mockFile);
-                    dz.emit("thumbnail", mockFile, "https://cdn-icons-png.flaticon.com/512/2991/2991108.png");
+                    // Use a generic file icon if it's not an image, or the actual image if possible
+                    const icon = "https://cdn-icons-png.flaticon.com/512/2991/2991108.png";
+                    dz.emit("thumbnail", mockFile, icon);
                     dz.emit("complete", mockFile);
                     
                     // Add existing hidden input so it's kept on save
@@ -692,7 +711,12 @@
 
                         <div class="mb-0">
                             <label class="form-label">Update Reference Material (Optional)</label>
-                            <div class="dropzone dz-luxury rounded-4" id="dropzone-edit-assignment"></div>
+                            <div class="dropzone dz-luxury rounded-4" id="dropzone-edit-assignment">
+                                <div class="dz-message" data-dz-message>
+                                    <span class="fw-bold">Drop files or click to upload</span>
+                                    <span class="text-muted small">Max 10 files (50MB each)</span>
+                                </div>
+                            </div>
                         </div>
                     </div>
                     <div class="modal-footer border-0 p-5 pt-0">
@@ -730,7 +754,12 @@
                         </div>
                         <div class="mb-0">
                             <label class="form-label">Update Resources</label>
-                            <div class="dropzone dz-luxury rounded-4" id="dropzone-edit-material"></div>
+                            <div class="dropzone dz-luxury rounded-4" id="dropzone-edit-material">
+                                <div class="dz-message" data-dz-message>
+                                    <span class="fw-bold">Drop files or click to upload</span>
+                                    <span class="text-muted small">Max 10 files (50MB each)</span>
+                                </div>
+                            </div>
                         </div>
                     </div>
                     <div class="modal-footer border-0 p-5 pt-0">
@@ -771,7 +800,52 @@
         .activity-luxury-item:hover { border-color: var(--primary-color); }
         .attachment-luxury-card { background: var(--bg-color); border-radius: 14px; border: 1px solid var(--border-color); transition: all 0.2s; }
         .attachment-luxury-card:hover { border-color: var(--primary-color); background: var(--card-bg); transform: translateY(-2px); box-shadow: 0 8px 15px rgba(0,0,0,0.05); }
-        .luxury-comment-input { background: var(--bg-color); border: 1.5px solid var(--border-color); border-radius: 50px; }
+        /* Comment Input Styling */
+        .comment-input-wrap {
+            position: relative;
+            background: var(--bg-color);
+            border: 1.5px solid var(--border-color);
+            border-radius: 50px;
+            padding: 4px;
+            display: flex;
+            align-items: center;
+            transition: all 0.3s;
+        }
+        .comment-input-wrap:focus-within {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 4px rgba(var(--primary-rgb), 0.1);
+            background: var(--card-bg);
+        }
+        .comment-input {
+            border: none;
+            background: transparent;
+            width: 100%;
+            padding: 8px 20px;
+            color: var(--text-color);
+            font-weight: 500;
+            outline: none;
+        }
+        .comment-send-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border: none;
+            background: var(--primary-color);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            margin-right: 2px;
+            transition: all 0.2s;
+        }
+        .comment-send-btn:hover {
+            transform: scale(1.08) rotate(-5deg);
+            background: var(--secondary-color);
+        }
+        .comment-send-btn:active {
+            transform: scale(0.95);
+        }
         .max-width-800 { max-width: 800px; }
         .bg-primary-soft { background: rgba(var(--primary-rgb), 0.1); }
         .bg-success-soft { background: rgba(16, 185, 129, 0.1); }
@@ -781,5 +855,60 @@
         .ls-2 { letter-spacing: 2px; }
         .activity-type-icon { transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
         .activity-luxury-item:hover .activity-type-icon { transform: scale(1.1) rotate(-5deg); }
+
+        /* Dropzone Luxury Styling for Edit Modals */
+        .dz-luxury.dropzone {
+            background: var(--bg-color) !important;
+            border: 2px dashed var(--border-color) !important;
+            border-radius: 16px !important;
+            min-height: 120px !important;
+            padding: 20px !important;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            cursor: pointer;
+        }
+        .dz-luxury.dropzone.dz-drag-hover { border-color: var(--primary-color) !important; background: rgba(var(--primary-rgb), 0.05) !important; }
+        .dz-luxury .dz-message { width: 100%; margin: 1em 0; text-align: center; }
+        .dz-luxury .dz-message .fw-bold { display: block; font-size: 1.1rem; color: var(--text-color); }
+        .dz-luxury .dz-message .text-muted { font-size: 0.85rem; }
+
+        /* Custom Preview Template for Edit Modals */
+        .dz-luxury .dz-preview {
+            width: 130px;
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            overflow: hidden;
+            margin: 0;
+            padding: 0;
+            position: relative;
+            transition: transform 0.2s;
+        }
+        .dz-luxury .dz-preview .dz-image { border-radius: 0; width: 100%; height: 80px; }
+        .dz-luxury .dz-preview .dz-image img { width: 100%; height: 100%; object-fit: cover; }
+        .dz-luxury .dz-preview .dz-details {
+            padding: 8px;
+            background: transparent;
+            color: var(--text-color);
+            opacity: 1;
+            position: static;
+        }
+        .dz-luxury .dz-preview .dz-details .dz-filename { font-weight: 600; font-size: 0.75rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .dz-luxury .dz-preview .dz-details .dz-size { font-size: 0.65rem; color: var(--text-muted); }
+        .dz-luxury .dz-preview .dz-remove {
+            display: block;
+            padding: 4px;
+            text-align: center;
+            color: #ff5252 !important;
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-decoration: none;
+            border-top: 1px solid var(--border-color);
+            transition: background 0.15s;
+        }
+        .dz-luxury .dz-preview .dz-remove:hover { background: rgba(255, 82, 82, 0.08); }
+        .dz-luxury .dz-preview .dz-progress { height: 3px; border-radius: 0; background: var(--border-color); bottom: 0; top: auto; left: 0; right: 0; opacity: 1; pointer-events: none; }
+        .dz-luxury .dz-preview .dz-progress .dz-upload { background: var(--primary-color); }
     </style>
 @endsection

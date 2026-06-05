@@ -1,11 +1,11 @@
-<!-- Assignment Submission Modal -->
+{{-- resources/views/courses/partials/submission_modal.blade.php --}}
 <div class="modal fade" id="submitAssignmentModal{{ $activity->id }}" tabindex="-1" data-bs-backdrop="static">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content overflow-hidden shadow-luxury rounded-5 border-0">
             <div class="modal-header border-0 p-5 pb-2">
                 <h3 class="fw-extrabold text-main m-0 d-flex align-items-center gap-3">
-                    <div class="p-2 bg-primary-soft rounded-3 text-primary">
-                        <i data-lucide="send" size="24"></i>
+                    <div class="p-2 bg-primary-soft rounded-3 text-primary d-flex align-items-center justify-content-center" style="width: 44px; height: 44px;">
+                        <i data-lucide="send" size="24" style="transform: translate(-1.5px, 1.5px)"></i>
                     </div>
                     Turn In Work
                 </h3>
@@ -31,8 +31,24 @@
 
                     <div class="mb-0">
                         <label class="form-label">Submission Files (Max 10 files, 50MB each)</label>
-                        <div class="neon-drop-card" id="drop-card-submission-{{ $activity->id }}">
-                            <div id="dz-submission-{{ $activity->id }}" class="neon-dropzone"></div>
+                        <div class="neon-drop-card" id="drop-card-sub-{{ $activity->id }}">
+                            <!-- Placeholder -->
+                            <div class="neon-dz-message" id="msg-sub-{{ $activity->id }}">
+                                <div class="neon-icon-wrap">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M4 16v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/>
+                                        <polyline points="16 12 12 8 8 12"/>
+                                        <line x1="12" y1="8" x2="12" y2="20"/>
+                                    </svg>
+                                </div>
+                                <h6 class="mb-1 fw-bold">Attach your work</h6>
+                                <p class="neon-dz-sub mb-0">or <span class="neon-browse-btn">browse files</span></p>
+                            </div>
+                            <!-- Previews -->
+                            <div id="dz-sub-{{ $activity->id }}-previews" class="neon-previews-wrap"></div>
+                            <!-- Hidden DZ trigger -->
+                            <div id="dz-sub-{{ $activity->id }}" class="neon-dropzone-hidden"></div>
+                            <!-- Stats -->
                             <div class="neon-stats">
                                 <div class="neon-stat">
                                     <div class="neon-stat-num" id="count-sub-{{ $activity->id }}-total">0</div>
@@ -48,7 +64,7 @@
                                 </div>
                             </div>
                         </div>
-                        <div id="inputs-submission-{{ $activity->id }}"></div>
+                        <div id="inputs-sub-{{ $activity->id }}"></div>
                     </div>
                 </div>
                 <div class="modal-footer border-0 p-5 pt-0">
@@ -61,95 +77,31 @@
 </div>
 
 <script>
-(function() {
-    const activityId = '{{ $activity->id }}';
-    const dzId = '#dz-submission-' + activityId;
-    const cardId = 'drop-card-submission-' + activityId;
-    
-    const initModalDZ = () => {
-        const el = document.querySelector(dzId);
-        if (!el || el.dropzone) return;
+(function () {
+    const actId   = '{{ $activity->id }}';
+    const prefix  = 'sub-' + actId;
+    const modalEl = document.getElementById('submitAssignmentModal' + actId);
 
-        const card = document.getElementById(cardId);
-        let total = 0, success = 0, error = 0;
+    modalEl.addEventListener('shown.bs.modal', function () {
+        // Use the shared initNeonDZ helper defined in modals.blade.php
+        if (typeof initNeonDZ === 'function') {
+            initNeonDZ(
+                prefix,
+                'drop-card-sub-' + actId,
+                'dz-sub-' + actId + '-previews',
+                'dz-sub-' + actId,
+                'inputs-sub-' + actId,
+                'msg-sub-' + actId
+            );
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+        }
+    });
 
-        const dz = new Dropzone(dzId, {
-            url: "{{ route('upload') }}",
-            maxFilesize: 50,
-            maxFiles: 10,
-            autoProcessQueue: true,
-            addRemoveLinks: true,
-            dictRemoveFile: "✕ Remove",
-            dictDefaultMessage: '',
-            headers: { 'X-CSRF-TOKEN': "{{ csrf_token() }}" },
-            paramName: "file",
-            parallelUploads: 2,
-            previewTemplate: `
-                <div class="neon-preview">
-                    <img data-dz-thumbnail />
-                    <div class="neon-preview-details">
-                        <div class="neon-preview-name"><span data-dz-name></span></div>
-                        <div class="neon-preview-size" data-dz-size></div>
-                    </div>
-                    <div class="neon-progress-bar"><span class="neon-progress-fill" data-dz-uploadprogress></span></div>
-                    <div class="neon-success-mark">✔</div>
-                    <div class="neon-error-mark">✘</div>
-                    <div class="neon-error-msg"><span data-dz-errormessage></span></div>
-                    <a class="dz-remove" href="javascript:undefined;" data-dz-remove>✕ Remove</a>
-                </div>
-            `
-        });
-
-        // Inject custom message
-        el.insertAdjacentHTML('afterbegin', `<div class="neon-dz-message">
-            <div class="neon-icon-wrap">
-                <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M4 16v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/>
-                    <polyline points="16 12 12 8 8 12"/>
-                    <line x1="12" y1="8" x2="12" y2="20"/>
-                </svg>
-            </div>
-            <h6 class="mb-1 fw-bold">Attach your work</h6>
-            <p class="neon-dz-sub">or <span class="neon-browse-btn">browse files</span></p>
-        </div>`);
-
-        dz.on('dragenter', () => card.classList.add('neon-drag-active'));
-        dz.on('dragleave', () => card.classList.remove('neon-drag-active'));
-        dz.on('drop', () => card.classList.remove('neon-drag-active'));
-
-        dz.on('addedfile', () => {
-            total++;
-            document.getElementById(\`count-sub-\${activityId}-total\`).textContent = total;
-        });
-
-        dz.on('success', (file, response) => {
-            success++;
-            document.getElementById(\`count-sub-\${activityId}-success\`).textContent = success;
-            const hidden = document.createElement('input');
-            hidden.type = 'hidden';
-            hidden.name = 'files[]';
-            hidden.value = JSON.stringify(response);
-            hidden.id = 'file-input-' + file.upload.uuid;
-            document.getElementById('inputs-submission-' + activityId).appendChild(hidden);
-            showToast(\`✔ "\${file.name}" uploaded\`, 'success');
-        });
-
-        dz.on('error', (file, errorMsg) => {
-            error++;
-            document.getElementById(\`count-sub-\${activityId}-error\`).textContent = error;
-            showToast(typeof errorMsg === 'string' ? errorMsg : errorMsg.message, 'error');
-        });
-
-        dz.on('removedfile', (file) => {
-            total = Math.max(0, total - 1);
-            document.getElementById(\`count-sub-\${activityId}-total\`).textContent = total;
-            const hidden = document.getElementById('file-input-' + file.upload.uuid);
-            if (hidden) hidden.remove();
-        });
-    };
-
-    // Initialize when modal is shown to ensure element is ready
-    const modalEl = document.getElementById('submitAssignmentModal' + activityId);
-    modalEl.addEventListener('shown.bs.modal', initModalDZ);
+    modalEl.addEventListener('hidden.bs.modal', function () {
+        if (window._dzInstances && window._dzInstances[prefix]) {
+            try { window._dzInstances[prefix].destroy(); } catch (e) {}
+            delete window._dzInstances[prefix];
+        }
+    });
 })();
 </script>

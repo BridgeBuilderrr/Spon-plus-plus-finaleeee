@@ -13,6 +13,11 @@ class DashboardController extends Controller
     {
         $user = Auth::user();
         
+        // Increase sort buffer for this session
+        try {
+            \Illuminate\Support\Facades\DB::statement('SET SESSION sort_buffer_size = 1048576 * 4'); // 4MB
+        } catch (\Exception $e) {}
+
         // Recently accessed classrooms
         $recentClassrooms = $user->classrooms()
                                 ->orderByPivot('last_accessed_at', 'desc')
@@ -20,7 +25,8 @@ class DashboardController extends Controller
                                 ->get();
 
         // Pending assignments (nearest due date)
-        $pendingAssignments = Assignment::whereIn('classroom_id', $user->classrooms->pluck('id'))
+        $pendingAssignments = Assignment::with('classroom')
+                                     ->whereIn('classroom_id', $user->classrooms->pluck('id'))
                                      ->whereDoesntHave('submissions', function($q) use ($user) {
                                          $q->where('user_id', $user->id);
                                      })
