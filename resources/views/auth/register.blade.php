@@ -49,10 +49,24 @@
         </div>
 
 
-        <div class="mb-5 text-center">
-            <p class="small text-muted fw-medium px-2">
-                By creating an account, you agree to our <a href="#" class="text-decoration-none fw-bold" style="color: #667eea;">Terms of Service</a>.
-            </p>
+        <style>
+            .form-check-input:checked {
+                background-color: #764ba2 !important;
+                border-color: #764ba2 !important;
+            }
+            .form-check-input:focus {
+                border-color: #764ba2 !important;
+                box-shadow: 0 0 0 4px rgba(118, 75, 162, 0.25) !important;
+            }
+        </style>
+
+        <div class="mb-4 text-start">
+            <div class="form-check d-flex align-items-center gap-2">
+                <input class="form-check-input mt-0" type="checkbox" name="terms" id="terms" required style="cursor: pointer; width: 1.25rem; height: 1.25rem; border: 1.5px solid #cbd5e0; border-radius: 6px; transition: all 0.2s;">
+                <label class="form-check-label small text-muted fw-medium mb-0" for="terms" style="cursor: pointer; user-select: none; line-height: 1.2;">
+                    I agree to the <a href="#" class="text-decoration-none fw-bold" style="color: #667eea;">Terms of Service</a>
+                </label>
+            </div>
         </div>
 
         <button type="submit" class="btn btn-primary w-100 mb-4 py-3 shadow-lg">Start Learning Now</button>

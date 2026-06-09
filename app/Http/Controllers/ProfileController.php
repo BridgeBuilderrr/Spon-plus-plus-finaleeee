@@ -52,11 +52,11 @@ class ProfileController extends Controller
         $request->validate(['avatar' => 'required|string']);
 
         try {
-            $image = str_replace('data:image/png;base64,', '', $request->avatar);
+            $image = preg_replace('#^data:image/\w+;base64,#i', '', $request->avatar);
             $image = str_replace(' ', '+', $image);
             $imageName = 'profiles/' . $user->id . '_' . time() . '.png';
 
-            if ($user->avatar_path && !Str::contains($user->avatar_path, 'ui-avatars')) {
+            if ($user->avatar_path && is_string($user->avatar_path) && !\Illuminate\Support\Str::contains($user->avatar_path, 'ui-avatars')) {
                 Storage::disk('public')->delete($user->avatar_path);
             }
 
@@ -79,12 +79,12 @@ class ProfileController extends Controller
 
         try {
             $image = $request->banner;
-            $image = str_replace('data:image/png;base64,', '', $image);
+            $image = preg_replace('#^data:image/\w+;base64,#i', '', $image);
             $image = str_replace(' ', '+', $image);
             $imageName = 'banners/' . $user->id . '_' . time() . '.png';
 
             // Delete old banner if exists
-            if ($user->profile_banner) {
+            if ($user->profile_banner && is_string($user->profile_banner)) {
                 Storage::disk('public')->delete($user->profile_banner);
             }
 

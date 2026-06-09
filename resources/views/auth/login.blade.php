@@ -38,7 +38,7 @@
                     Keep me signed in
                 </label>
             </div>
-            <a href="#" class="small text-decoration-none fw-bold" style="color: #667eea;">Forgot Access?</a>
+            <a href="{{ route('password.request') }}" class="small text-decoration-none fw-bold" style="color: #667eea;">Forgot Password?</a>
         </div>
 
         <button type="submit" class="btn btn-primary w-100 mb-4 py-3 shadow-lg">Sign In to Dashboard</button>

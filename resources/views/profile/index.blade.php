@@ -261,6 +261,14 @@
 
             function uploadCrop(c, url, fieldName) {
                 if (!c) return;
+
+                const btnId = fieldName === 'avatar' ? 'apply-avatar-crop' : 'crop-btn';
+                const btn = document.getElementById(btnId);
+                const spinner = btn ? btn.querySelector('.spinner-border') : null;
+
+                if (btn) btn.disabled = true;
+                if (spinner) spinner.classList.remove('d-none');
+
                 const canvas = c.getCroppedCanvas({ width: fieldName === 'avatar' ? 400 : 1500 });
                 const base64 = canvas.toDataURL('image/png');
 
@@ -269,12 +277,58 @@
                     headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
                     body: JSON.stringify({ [fieldName]: base64 })
                 })
-                .then(res => res.json())
+                .then(res => {
+                    if (!res.ok) {
+                        return res.json().then(errData => {
+                            throw new Error(errData.message || `Server error (${res.status})`);
+                        }).catch(() => {
+                            throw new Error(`Server error (${res.status})`);
+                        });
+                    }
+                    return res.json();
+                })
                 .then(data => {
                     if (data.success) {
-                        showToast('Profile updated!', 'success');
-                        location.reload();
+                        showToast(fieldName === 'avatar' ? 'Profile picture updated!' : 'Profile cover updated!', 'success');
+                        
+                        // Real-time update of image sources before reload
+                        if (fieldName === 'avatar') {
+                            const currentAvatar = document.getElementById('current-avatar');
+                            if (currentAvatar) currentAvatar.src = data.url;
+                            
+                            // Also update small avatars in sidebar
+                            document.querySelectorAll('img[src*="storage/profiles"], img[src*="ui-avatars.com"]').forEach(img => {
+                                if (img.classList.contains('rounded-circle') && (img.width === 40 || img.height === 40)) {
+                                    img.src = data.url;
+                                }
+                            });
+                        } else {
+                            const currentBanner = document.getElementById('current-banner');
+                            if (currentBanner) {
+                                currentBanner.src = data.url;
+                                currentBanner.classList.remove('opacity-40');
+                            }
+                        }
+
+                        // Close modals smoothly
+                        const modalEl = document.getElementById(fieldName === 'avatar' ? 'avatarCropModal' : 'cropModal');
+                        if (modalEl) {
+                            const modalInstance = bootstrap.Modal.getInstance(modalEl);
+                            modalInstance?.hide();
+                        }
+
+                        setTimeout(() => {
+                            location.reload();
+                        }, 800);
+                    } else {
+                        throw new Error(data.message || 'Unknown error occurred.');
                     }
+                })
+                .catch(err => {
+                    console.error(err);
+                    showToast(err.message, 'error');
+                    if (btn) btn.disabled = false;
+                    if (spinner) spinner.classList.add('d-none');
                 });
             }
         });

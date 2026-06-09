@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\PasswordResetController;
 use Illuminate\Support\Facades\Route;
 
 Route::redirect('/', '/login');
@@ -10,6 +11,15 @@ Route::middleware('guest')->group(function () {
     Route::post('/login', [AuthController::class, 'login']);
     Route::get('/register', [AuthController::class, 'showRegister'])->name('register');
     Route::post('/register', [AuthController::class, 'register']);
+
+    // Forgot & Reset Password Routes (OTP Flow)
+    Route::get('/forgot-password', [PasswordResetController::class, 'showForgotForm'])->name('password.request');
+    Route::post('/forgot-password', [PasswordResetController::class, 'sendOtp'])->name('password.sendOtp');
+    Route::get('/verify-otp', [PasswordResetController::class, 'showVerifyForm'])->name('password.verifyOtp');
+    Route::post('/verify-otp', [PasswordResetController::class, 'verifyOtp'])->name('password.verifyOtp.post');
+    Route::post('/resend-otp', [PasswordResetController::class, 'resendOtp'])->name('password.resendOtp');
+    Route::get('/reset-password', [PasswordResetController::class, 'showResetForm'])->name('password.resetForm');
+    Route::post('/reset-password', [PasswordResetController::class, 'resetPassword'])->name('password.update');
 });
 
 Route::middleware('auth')->group(function () {

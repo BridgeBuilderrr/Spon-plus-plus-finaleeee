@@ -160,10 +160,10 @@
     <div class="card border-0 shadow-sm rounded-4 mb-5 overflow-hidden" style="background: var(--card-bg);">
         <ul class="nav nav-tabs border-0 justify-content-center luxury-tabs-under" id="classTab" role="tablist">
             <li class="nav-item">
-                <button class="nav-link active px-5 py-3 fw-bold" id="stream-tab" data-bs-toggle="tab" data-bs-target="#stream">Stream Feed</button>
+                <button class="nav-link active px-5 py-3 fw-bold" id="stream-tab" data-bs-toggle="tab" data-bs-target="#stream">Lessosns</button>
             </li>
             <li class="nav-item">
-                <button class="nav-link px-5 py-3 fw-bold" id="people-tab" data-bs-toggle="tab" data-bs-target="#members">Classmates</button>
+                <button class="nav-link px-5 py-3 fw-bold" id="people-tab" data-bs-toggle="tab" data-bs-target="#members">Participants</button>
             </li>
         </ul>
     </div>
@@ -439,7 +439,7 @@
             <div class="max-width-800 mx-auto mt-5">
                 <section class="mb-5">
                     <div class="d-flex justify-content-between align-items-center border-bottom border-primary border-3 pb-3 mb-4">
-                        <h3 class="fw-extrabold text-primary m-0">Instructors</h3>
+                        <h3 class="fw-extrabold text-primary m-0">Teachers</h3>
                         <i data-lucide="shield-check" class="text-primary opacity-50" size="24"></i>
                     </div>
                     <div class="d-flex align-items-center justify-content-between p-3 rounded-4 bg-card mb-2 shadow-sm border">
