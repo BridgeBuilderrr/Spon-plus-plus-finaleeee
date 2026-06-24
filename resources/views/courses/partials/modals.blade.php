@@ -1,94 +1,5 @@
 <!-- Spon++ Modal Activities -->
 
-<!-- Create Assignment Modal -->
-<div class="modal fade" id="createAssignmentModal" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered modal-lg">
-        <div class="modal-content overflow-hidden">
-            <div class="modal-header border-0 p-5 pb-2">
-                <h3 class="fw-extrabold text-main m-0 d-flex align-items-center gap-3">
-                    <div class="p-2 bg-primary-soft rounded-3 text-primary">
-                        <i data-lucide="file-plus" size="24"></i>
-                    </div>
-                    Assign New Task
-                </h3>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <form action="{{ route('assignments.store', $classroom) }}" method="POST" id="form-assignment">
-                @csrf
-                <div class="modal-body p-5 pt-3">
-                    <div class="mb-4">
-                        <label class="form-label">Task Title</label>
-                        <input type="text" name="title" class="form-control" placeholder="e.g. Weekly Reflection" required autofocus>
-                    </div>
-
-                    <div class="mb-4">
-                        <label class="form-label">Detailed Instructions</label>
-                        <textarea name="description" id="assignment-editor" class="form-control"></textarea>
-                    </div>
-
-                    <div class="row g-4 mb-4">
-                        <div class="col-md-6">
-                            <label class="form-label">Activation Date (Optional)</label>
-                            <div class="input-group luxury-input-group">
-                                <span class="input-group-text border-0 bg-transparent ps-3"><i data-lucide="calendar" size="18" class="text-primary"></i></span>
-                                <input type="datetime-local" name="open_date" class="form-control border-0 bg-transparent ps-2 py-3">
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label">Submission Deadline</label>
-                            <div class="input-group luxury-input-group">
-                                <span class="input-group-text border-0 bg-transparent ps-3"><i data-lucide="clock" size="18" class="text-danger"></i></span>
-                                <input type="datetime-local" name="due_date" class="form-control border-0 bg-transparent ps-2 py-3" required>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="mb-0">
-                        <label class="form-label">Reference Material (Max 10 files, 50MB/each)</label>
-                        <div class="neon-drop-card" id="drop-card-assignment">
-                            <!-- Message shown when empty -->
-                            <div class="neon-dz-message" id="msg-assignment">
-                                <div class="neon-icon-wrap">
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                                        <path d="M4 16v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/>
-                                        <polyline points="16 12 12 8 8 12"/>
-                                        <line x1="12" y1="8" x2="12" y2="20"/>
-                                    </svg>
-                                </div>
-                                <h6 class="mb-1 fw-bold">Drop files here</h6>
-                                <p class="neon-dz-sub mb-0">or <span class="neon-browse-btn">browse files</span></p>
-                            </div>
-                            <!-- Dropzone previews render here -->
-                            <div id="dz-assignment-previews" class="neon-previews-wrap"></div>
-                            <!-- Hidden actual dropzone trigger -->
-                            <div id="dz-assignment" class="neon-dropzone-hidden"></div>
-                            <div class="neon-stats">
-                                <div class="neon-stat">
-                                    <div class="neon-stat-num" id="count-assignment-total">0</div>
-                                    <div class="neon-stat-label">FILES</div>
-                                </div>
-                                <div class="neon-stat">
-                                    <div class="neon-stat-num neon-success" id="count-assignment-success">0</div>
-                                    <div class="neon-stat-label">UPLOADED</div>
-                                </div>
-                                <div class="neon-stat">
-                                    <div class="neon-stat-num neon-danger" id="count-assignment-error">0</div>
-                                    <div class="neon-stat-label">FAILED</div>
-                                </div>
-                            </div>
-                        </div>
-                        <div id="inputs-assignment"></div>
-                    </div>
-                </div>
-                <div class="modal-footer border-0 p-5 pt-0">
-                    <button type="button" class="btn btn-light rounded-pill px-4 fw-bold btn-ripple" data-bs-dismiss="modal" onclick="addRipple(event, this)">Discard</button>
-                    <button type="submit" class="btn btn-primary rounded-pill px-5 fw-bold shadow btn-ripple" onclick="addRipple(event, this)">Publish Assignment</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-
 <!-- Upload Material Modal -->
 <div class="modal fade" id="uploadMaterialModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
@@ -348,11 +259,10 @@
 
     // ─── Init on modal shown ─────────────────────────────────────────────────────
     document.addEventListener('DOMContentLoaded', function () {
-
         // TinyMCE
         if (typeof tinymce !== 'undefined') {
             tinymce.init({
-                selector: '#assignment-editor, #announcement-editor',
+                selector: '#announcement-editor',
                 height: 300,
                 menubar: false,
                 skin: (document.body.getAttribute('data-bs-theme') === 'dark' ? 'oxide-dark' : 'oxide'),
@@ -363,23 +273,9 @@
             });
         }
 
-        // Initialize when modals open (so DOM is fully visible — required for DZ)
-        document.getElementById('createAssignmentModal').addEventListener('shown.bs.modal', function () {
-            initNeonDZ('assignment', 'drop-card-assignment', 'dz-assignment-previews', 'dz-assignment', 'inputs-assignment', 'msg-assignment');
-            lucide.createIcons();
-        });
-
         document.getElementById('uploadMaterialModal').addEventListener('shown.bs.modal', function () {
             initNeonDZ('material', 'drop-card-material', 'dz-material-previews', 'dz-material', 'inputs-material', 'msg-material');
-            lucide.createIcons();
-        });
-
-        // Clean up on close so next open gets a fresh instance
-        document.getElementById('createAssignmentModal').addEventListener('hidden.bs.modal', function () {
-            if (window._dzInstances['assignment']) {
-                try { window._dzInstances['assignment'].destroy(); } catch(e) {}
-                delete window._dzInstances['assignment'];
-            }
+            if (typeof lucide !== 'undefined') lucide.createIcons();
         });
 
         document.getElementById('uploadMaterialModal').addEventListener('hidden.bs.modal', function () {

@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-#[Fillable(['assignment_id', 'user_id', 'content', 'files', 'status', 'grade', 'teacher_comment', 'graded_at', 'submitted_at'])]
+#[Fillable(['assignment_id', 'user_id', 'content', 'answers', 'files', 'status', 'grade', 'teacher_comment', 'graded_at', 'submitted_at'])]
 class Submission extends Model
 {
     use HasFactory;
@@ -15,6 +15,7 @@ class Submission extends Model
     {
         return [
             'files' => 'array',
+            'answers' => 'array',
             'graded_at' => 'datetime',
             'submitted_at' => 'datetime',
         ];

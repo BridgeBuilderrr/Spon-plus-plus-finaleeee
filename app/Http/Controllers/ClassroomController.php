@@ -82,7 +82,7 @@ class ClassroomController extends Controller
         $classroom = Classroom::where('code', $request->code)->first();
 
         if ($classroom->users()->where('user_id', Auth::id())->exists()) {
-            return back()->with('error', 'You are already a member of this class.');
+            return back()->with('error', 'You are already a student of this class.');
         }
 
         $classroom->users()->attach(Auth::id(), [
@@ -125,12 +125,12 @@ class ClassroomController extends Controller
         return view('courses.show', compact('classroom', 'role'));
     }
 
-    public function people(Classroom $classroom)
+    public function students(Classroom $classroom)
     {
         $teachers = $classroom->users()->wherePivot('role', 'Teacher')->get();
-        $members = $classroom->users()->wherePivot('role', 'Member')->get();
+        $students = $classroom->users()->wherePivot('role', 'Member')->get();
 
-        return view('courses.people', compact('classroom', 'teachers', 'members'));
+        return view('courses.students', compact('classroom', 'teachers', 'students'));
     }
 
     public function kick(Classroom $classroom, User $user)
@@ -146,7 +146,7 @@ class ClassroomController extends Controller
 
         $classroom->users()->detach($user->id);
 
-        return back()->with('success', 'Member kicked successfully.');
+        return back()->with('success', 'Student kicked successfully.');
     }
 
     public function exit(Classroom $classroom)

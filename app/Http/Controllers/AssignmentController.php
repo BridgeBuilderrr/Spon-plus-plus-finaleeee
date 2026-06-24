@@ -10,18 +10,34 @@ use Illuminate\Support\Facades\Notification;
 
 class AssignmentController extends Controller
 {
+    public function create(Classroom $classroom)
+    {
+        if ($classroom->teacher_id !== auth()->id()) return abort(403);
+        return view('courses.assignments.create', compact('classroom'));
+    }
+
+    public function edit(Classroom $classroom, Assignment $assignment)
+    {
+        if ($classroom->teacher_id !== auth()->id()) return abort(403);
+        return view('courses.assignments.edit', compact('classroom', 'assignment'));
+    }
+
     public function store(Request $request, Classroom $classroom)
     {
         $request->validate([
             'title' => 'required|string|max:255',
-            'description' => 'required|string',
-            'open_date' => 'nullable|date|after_or_equal:now',
-            'due_date' => 'required|date|after:now|after_or_equal:open_date',
+            'description' => 'nullable|string',
+            'assignment_type' => 'required|string|in:essay,pilihan_ganda',
+            'open_date' => 'nullable|date',
+            'due_date' => 'required|date',
+            'questions' => 'nullable|array',
         ]);
 
         $assignment = $classroom->assignments()->create([
             'title' => $request->title,
-            'description' => $request->description,
+            'assignment_type' => $request->input('assignment_type', 'essay'),
+            'description' => $request->description ?? '',
+            'questions' => $request->input('questions'),
             'open_date' => $request->open_date,
             'due_date' => $request->due_date,
             'files' => $request->input('files', [])
@@ -38,19 +54,23 @@ class AssignmentController extends Controller
 
         $request->validate([
             'title' => 'required|string|max:255',
-            'description' => 'required|string',
+            'description' => 'nullable|string',
+            'assignment_type' => 'required|string|in:essay,pilihan_ganda',
             'due_date' => 'required|date',
+            'questions' => 'nullable|array',
         ]);
 
         $assignment->update([
             'title' => $request->title,
-            'description' => $request->description,
+            'assignment_type' => $request->assignment_type,
+            'description' => $request->description ?? '',
             'due_date' => $request->due_date,
             'open_date' => $request->open_date,
-            'files' => $request->input('files', $assignment->files)
+            'questions' => $request->input('assignment_type') === 'pilihan_ganda' ? $request->input('questions', []) : null,
+            'files' => $request->input('assignment_type') === 'essay' ? $request->input('files', []) : null
         ]);
 
-        return back()->with('success', 'Assignment updated!');
+        return redirect()->route('courses.show', $classroom)->with('success', 'Assignment updated!');
     }
 
     public function destroy(Classroom $classroom, Assignment $assignment)

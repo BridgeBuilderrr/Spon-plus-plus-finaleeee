@@ -33,7 +33,7 @@ Route::middleware('auth')->group(function () {
 
     Route::prefix('classes/{classroom}')->group(function () {
         Route::get('/', [\App\Http\Controllers\ClassroomController::class, 'show'])->name('courses.show');
-        Route::get('/people', [\App\Http\Controllers\ClassroomController::class, 'people'])->name('courses.people');
+        Route::get('/students', [\App\Http\Controllers\ClassroomController::class, 'students'])->name('courses.students');
         Route::post('/update', [\App\Http\Controllers\ClassroomController::class, 'update'])->name('courses.update');
         Route::post('/update-banner', [\App\Http\Controllers\ClassroomController::class, 'updateBanner'])->name('courses.update_banner');
         Route::post('/delete-banner', [\App\Http\Controllers\ClassroomController::class, 'deleteBanner'])->name('courses.delete_banner');
@@ -48,7 +48,9 @@ Route::middleware('auth')->group(function () {
         Route::post('/materials/{material}/update', [\App\Http\Controllers\MaterialController::class, 'update'])->name('materials.update');
         Route::delete('/materials/{material}', [\App\Http\Controllers\MaterialController::class, 'destroy'])->name('materials.destroy');
 
+        Route::get('/assignments/create', [\App\Http\Controllers\AssignmentController::class, 'create'])->name('assignments.create');
         Route::post('/assignments', [\App\Http\Controllers\AssignmentController::class, 'store'])->name('assignments.store');
+        Route::get('/assignments/{assignment}/edit', [\App\Http\Controllers\AssignmentController::class, 'edit'])->name('assignments.edit');
         Route::post('/assignments/{assignment}/update', [\App\Http\Controllers\AssignmentController::class, 'update'])->name('assignments.update');
         Route::delete('/assignments/{assignment}', [\App\Http\Controllers\AssignmentController::class, 'destroy'])->name('assignments.destroy');
 
@@ -71,7 +73,34 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/search', [\App\Http\Controllers\SearchController::class, 'search'])->name('search');
     Route::post('/notifications/read-all', function () {
-        auth()->user()->unreadNotifications->markAsRead();
+        \Illuminate\Support\Facades\Auth::user()->unreadNotifications->markAsRead();
         return back();
     })->name('notifications.read-all');
+
+    Route::get('/notifications/unread', function () {
+        if (!\Illuminate\Support\Facades\Auth::check()) return response()->json(['error' => 'Unauthorized'], 401);
+        $user = \Illuminate\Support\Facades\Auth::user();
+        $unreadCount = $user->unreadNotifications->count();
+        $notifications = $user->notifications()->latest()->take(20)->get()->map(function($n) {
+            return [
+                'id' => $n->id,
+                'unread' => $n->unread(),
+                'classroom_id' => $n->data['classroom_id'] ?? '',
+                'classroom_name' => $n->data['classroom_name'] ?? '',
+                'message' => $n->data['message'] ?? '',
+                'type' => $n->data['type'] ?? '',
+                'icon' => match($n->data['type'] ?? '') {
+                    'assignment' => 'file-text',
+                    'material' => 'book-open',
+                    'announcement' => 'megaphone',
+                    default => 'bell'
+                },
+                'created_at_human' => $n->created_at->diffForHumans()
+            ];
+        });
+        return response()->json([
+            'unread_count' => $unreadCount,
+            'notifications' => $notifications
+        ]);
+    })->name('notifications.unread');
 });

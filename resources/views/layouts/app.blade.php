@@ -24,7 +24,7 @@
     <script>Dropzone.autoDiscover = false;</script>
 
     <!-- TinyMCE (Safari Compatible CDN) -->
-    <script src="https://cdn.jsdelivr.net/npm/tinymce@7/tinymce.min.js"></script>
+    <script src="https://cdn.tiny.cloud/1/uzyi3qni0rl59wmj5i3t38v3cebtp184ygnuw2vto9ugxut5/tinymce/7/tinymce.min.js" referrerpolicy="origin"></script>
 
     <!-- UI Enhancements Style -->
     <style>
@@ -896,6 +896,19 @@
                 border-color 0.35s,
                 color 0.25s;
         }
+
+        /* ── Fix: Modal stacking context ─────────────────────────────── */
+        /* The .page-enter > * animation rule creates a CSS stacking context  */
+        /* on every child, trapping modals below the backdrop. These rules    */
+        /* reset the stacking context for Bootstrap modals so they always     */
+        /* render at the root level above all other content.                  */
+        .modal,
+        .modal-backdrop {
+            animation: none !important;
+        }
+        .modal {
+            isolation: auto !important;
+        }
     </style>
     @stack('styles')
 </head>
@@ -984,11 +997,9 @@
 
                 <button class="icon-btn-luxury position-relative" type="button" data-bs-toggle="offcanvas" data-bs-target="#notificationSidebar" aria-controls="notificationSidebar">
                     <i data-lucide="bell" size="20"></i>
-                    @if(auth()->user()->unreadNotifications->count() > 0)
-                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger border border-2 border-white p-1" style="font-size: 0.6rem;">
-                            {{ auth()->user()->unreadNotifications->count() }}
-                        </span>
-                    @endif
+                    <span id="unread-notification-badge" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger border border-2 border-white p-1 {{ auth()->user()->unreadNotifications->count() > 0 ? '' : 'd-none' }}" style="font-size: 0.6rem;">
+                        {{ auth()->user()->unreadNotifications->count() }}
+                    </span>
                 </button>
             </div>
         </header>
@@ -998,6 +1009,9 @@
         </main>
     </div>
 
+    <!-- Body-level modals: rendered here so they sit outside .page-enter animation stacking context -->
+    @stack('body_modals')
+
     <!-- Notification Sidebar (Offcanvas) -->
     <div class="offcanvas offcanvas-end border-0 shadow-lg" tabindex="-1" id="notificationSidebar" aria-labelledby="notificationSidebarLabel" style="width: 400px; background: var(--bg-color);">
         <div class="offcanvas-header bg-primary text-white p-4">
@@ -1006,7 +1020,7 @@
         </div>
         <div class="offcanvas-body p-0">
             <div class="p-4 border-bottom bg-light-subtle d-flex justify-content-between align-items-center">
-                <span class="smaller fw-bold text-muted">{{ auth()->user()->unreadNotifications->count() }} Unread</span>
+                <span id="offcanvas-unread-count" class="smaller fw-bold text-muted">{{ auth()->user()->unreadNotifications->count() }} Unread</span>
                 @if(auth()->user()->unreadNotifications->count() > 0)
                     <form action="{{ route('notifications.read-all') }}" method="POST">
                         @csrf
@@ -1181,6 +1195,111 @@
         // Flash Messages
         @if(session('success')) showToast("{{ session('success') }}", 'success'); @endif
         @if(session('error')) showToast("{{ session('error') }}", 'error'); @endif
+
+        // Real-time Notification Polling (SSE Alternative)
+        (function() {
+            let lastFirstNotificationId = null;
+            
+            function pollNotifications() {
+                fetch('{{ route("notifications.unread") }}')
+                    .then(res => {
+                        if (!res.ok) throw new Error('Unauthenticated');
+                        return res.json();
+                    })
+                    .then(data => {
+                        if (data.error) return;
+                        
+                        // Update header count badge
+                        const badge = document.getElementById('unread-notification-badge');
+                        if (badge) {
+                            if (data.unread_count > 0) {
+                                badge.textContent = data.unread_count;
+                                badge.classList.remove('d-none');
+                            } else {
+                                badge.classList.add('d-none');
+                            }
+                        }
+
+                        // Update offcanvas unread header count
+                        const offcanvasCount = document.getElementById('offcanvas-unread-count');
+                        if (offcanvasCount) {
+                            offcanvasCount.textContent = data.unread_count + ' Unread';
+                        }
+
+                        // Update notification list container
+                        const scrollArea = document.querySelector('.notification-scroll-area');
+                        if (scrollArea && data.notifications) {
+                            // Check if a new notification is received
+                            const currentFirst = data.notifications[0];
+                            if (currentFirst && lastFirstNotificationId !== null && currentFirst.id !== lastFirstNotificationId) {
+                                if (typeof showToast === 'function') {
+                                    showToast(currentFirst.message, 'info');
+                                }
+                            }
+                            if (currentFirst) {
+                                lastFirstNotificationId = currentFirst.id;
+                            } else {
+                                lastFirstNotificationId = '';
+                            }
+
+                            if (data.notifications.length === 0) {
+                                scrollArea.innerHTML = `
+                                    <div class="p-5 text-center mt-5">
+                                        <div class="bg-light-subtle rounded-circle d-inline-flex p-4 mb-4">
+                                            <i data-lucide="bell-off" class="text-muted opacity-25" size="64"></i>
+                                        </div>
+                                        <h5 class="fw-bold text-muted">All caught up!</h5>
+                                        <p class="text-muted small">No new notifications at the moment.</p>
+                                    </div>`;
+                            } else {
+                                let html = '';
+                                data.notifications.forEach(n => {
+                                    const unreadClass = n.unread ? 'bg-primary-soft' : '';
+                                    html += `
+                                        <a href="/classes/${n.classroom_id}" class="text-decoration-none block p-4 border-bottom hover-bg-light transition-all d-block ${unreadClass}">
+                                            <div class="d-flex gap-3">
+                                                <div class="rounded-circle bg-primary-soft text-primary p-2 flex-shrink-0" style="width: 45px; height: 45px; display: grid; place-items: center;">
+                                                    <i data-lucide="${n.icon}" size="20"></i>
+                                                </div>
+                                                <div class="overflow-hidden w-100">
+                                                    <div class="smaller fw-extrabold text-main mb-1">${n.message}</div>
+                                                    <div class="smallest text-muted d-flex align-items-center gap-2 mt-1">
+                                                        <span class="badge bg-primary-soft text-primary rounded-pill px-2">${n.type}</span>
+                                                        <span>${n.created_at_human}</span>
+                                                    </div>
+                                                    <div class="smallest text-primary fw-bold mt-2 d-flex align-items-center gap-1">
+                                                        <i data-lucide="layers" size="12"></i>
+                                                        ${n.classroom_name}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </a>`;
+                                });
+                                scrollArea.innerHTML = html;
+                            }
+                            if (typeof lucide !== 'undefined') {
+                                lucide.createIcons();
+                            }
+                        }
+                    })
+                    .catch(err => {
+                        // Silent fail
+                    });
+            }
+
+            // Set initial first ID on load
+            const firstLink = document.querySelector('.notification-scroll-area a');
+            if (firstLink) {
+                // Parse or extract ID from link/attributes if needed, but fetching initial payload is safer
+            }
+            
+            // Wait slightly for first load, then start polling
+            setTimeout(() => {
+                pollNotifications();
+                // Set interval to 7 seconds
+                setInterval(pollNotifications, 7000);
+            }, 1000);
+        })();
     </script>
     @stack('scripts')
 </body>

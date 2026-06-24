@@ -24,7 +24,8 @@
                             <i data-lucide="plus-circle" size="18" class="me-2"></i> Post New Activity
                         </button>
                         <ul class="dropdown-menu dropdown-menu-end border-0 shadow-lg p-2 rounded-4 mt-2">
-                            <li><a class="dropdown-item rounded-3 py-2 fw-bold" href="#" data-bs-toggle="modal" data-bs-target="#createAssignmentModal"><i data-lucide="file-text" size="18" class="me-3 text-primary"></i> Assignment</a></li>
+                            <li><a class="dropdown-item rounded-3 py-2 fw-bold" href="{{ route('assignments.create', [$classroom, 'type' => 'essay']) }}"><i data-lucide="file-text" size="18" class="me-3 text-primary"></i> Exercise</a></li>
+                            <li><a class="dropdown-item rounded-3 py-2 fw-bold" href="{{ route('assignments.create', [$classroom, 'type' => 'pilihan_ganda']) }}"><i data-lucide="list-checks" size="18" class="me-3" style="color:#7c3aed"></i> <span style="color:#7c3aed">Quiz</span> <span class="badge ms-1 px-2 py-1 rounded-pill" style="background:rgba(139,92,246,0.12);color:#7c3aed;font-size:0.6rem;font-weight:800;">AUTO-GRADED</span></a></li>
                             <li><a class="dropdown-item rounded-3 py-2 fw-bold" href="#" data-bs-toggle="modal" data-bs-target="#uploadMaterialModal"><i data-lucide="book-open" size="18" class="me-3 text-success"></i> Material</a></li>
                             <li><hr class="dropdown-divider"></li>
                             <li><a class="dropdown-item rounded-3 py-2 fw-bold" href="#" data-bs-toggle="modal" data-bs-target="#createAnnouncementModal"><i data-lucide="megaphone" size="18" class="me-3 text-warning"></i> Announcement</a></li>
@@ -163,7 +164,7 @@
                 <button class="nav-link active px-5 py-3 fw-bold" id="stream-tab" data-bs-toggle="tab" data-bs-target="#stream">Lessosns</button>
             </li>
             <li class="nav-item">
-                <button class="nav-link px-5 py-3 fw-bold" id="people-tab" data-bs-toggle="tab" data-bs-target="#members">Participants</button>
+                <button class="nav-link px-5 py-3 fw-bold" id="students-tab" data-bs-toggle="tab" data-bs-target="#students">Students</button>
             </li>
         </ul>
     </div>
@@ -198,7 +199,7 @@
                     <div class="card border-0 shadow-sm rounded-5 p-4 bg-primary-soft">
                         <h6 class="fw-bold mb-2">Space Stats</h6>
                         <div class="d-flex justify-content-between mb-2 smaller">
-                            <span class="text-muted">Members</span>
+                            <span class="text-muted">Students</span>
                             <span class="fw-bold">{{ $classroom->users()->wherePivot('role', 'Member')->count() }}</span>
                         </div>
                         <div class="d-flex justify-content-between smaller">
@@ -226,10 +227,15 @@
                                             $type = 'material';
                                             if (isset($activity->due_date)) $type = 'assignment';
                                             elseif ($activity instanceof \App\Models\Announcement) $type = 'announcement';
-                                            
+
+                                            $isQuiz = $type === 'assignment' && isset($activity->assignment_type) && $activity->assignment_type === 'pilihan_ganda';
+
                                             $icon = 'book-open';
                                             $colorClass = 'bg-success-soft text-success';
-                                            if ($type === 'assignment') {
+                                            if ($isQuiz) {
+                                                $icon = 'list-checks';
+                                                $colorClass = 'bg-purple-soft text-purple';
+                                            } elseif ($type === 'assignment') {
                                                 $icon = 'file-text';
                                                 $colorClass = 'bg-primary-soft text-primary';
                                             } elseif ($type === 'announcement') {
@@ -241,13 +247,26 @@
                                             <i data-lucide="{{ $icon }}" size="28"></i>
                                         </div>
                                         <div>
-                                            <h4 class="fw-extrabold mb-1 text-main">{{ $activity->title }}</h4>
+                                            <h4 class="fw-extrabold mb-1 text-main d-flex align-items-center gap-2">
+                                                {{ $activity->title }}
+                                                @if($isQuiz)
+                                                    <span class="badge rounded-pill px-3 py-1 fw-bold smallest" style="background:rgba(139,92,246,0.12);color:#7c3aed;font-size:0.65rem;">Quiz</span>
+                                                @endif
+                                            </h4>
                                             <div class="text-muted d-flex align-items-center gap-2 smaller font-jakarta fw-medium">
                                                 <span>{{ $activity->created_at->format('F d, Y') }}</span>
                                                 <span>&bull;</span>
-                                                <span class="{{ $type === 'announcement' ? 'text-warning' : ($type === 'assignment' ? 'text-primary' : 'text-success') }}">
-                                                    {{ ucfirst($type) }}
+                                                <span class="{{ $isQuiz ? 'text-purple' : ($type === 'announcement' ? 'text-warning' : ($type === 'assignment' ? 'text-primary' : 'text-success')) }}">
+                                                    @if($type === 'assignment')
+                                                        {{ $isQuiz ? 'Quiz' : 'Exercise' }}
+                                                    @else
+                                                        {{ ucfirst($type) }}
+                                                    @endif
                                                 </span>
+                                                @if($type === 'assignment' && isset($activity->questions) && count($activity->questions ?? []) > 0)
+                                                    <span>&bull;</span>
+                                                    <span>{{ count($activity->questions) }} questions</span>
+                                                @endif
                                             </div>
                                         </div>
                                     </div>
@@ -300,20 +319,36 @@
                                                 <i data-lucide="users" size="16" class="me-2"></i> {{ $activity->submissions->count() }} Submissions
                                             </button>
                                         @elseif(isset($activity->due_date))
-                                            @php $submission = $activity->submissions->where('user_id', auth()->id())->first(); @endphp
+                                            @php
+                                                $submission = $activity->submissions->where('user_id', auth()->id())->first();
+                                                $isQuizActivity = isset($activity->assignment_type) && $activity->assignment_type === 'pilihan_ganda';
+                                            @endphp
                                             @if($submission)
                                                 <div class="d-flex align-items-center gap-2">
-                                                    <span class="badge rounded-pill bg-success text-white px-4 py-2 fw-bold shadow-sm">
-                                                        <i data-lucide="check" size="14" class="me-2"></i> Handed In
-                                                    </span>
+                                                    @if($isQuizActivity && $submission->grade !== null)
+                                                        @php $scoreColor = $submission->grade >= 80 ? 'success' : ($submission->grade >= 60 ? 'warning' : 'danger'); @endphp
+                                                        <span class="badge rounded-pill bg-{{ $scoreColor }} text-white px-4 py-2 fw-bold shadow-sm">
+                                                            <i data-lucide="check-circle" size="14" class="me-2"></i> {{ $submission->grade }}%
+                                                        </span>
+                                                    @else
+                                                        <span class="badge rounded-pill bg-success text-white px-4 py-2 fw-bold shadow-sm">
+                                                            <i data-lucide="check" size="14" class="me-2"></i> Handed In
+                                                        </span>
+                                                    @endif
                                                     <button class="btn btn-outline-secondary rounded-pill px-3 py-2 fw-bold smaller border-2 transition-all" data-bs-toggle="modal" data-bs-target="#editSubmissionModal{{ $activity->id }}">
-                                                        Edit Work
+                                                        {{ $isQuizActivity ? 'View Results' : 'Edit Work' }}
                                                     </button>
                                                 </div>
                                             @else
-                                                <button class="btn btn-primary rounded-pill px-4 py-2 fw-extrabold shadow-sm btn-ripple" data-bs-toggle="modal" data-bs-target="#submitAssignmentModal{{ $activity->id }}" onclick="addRipple(event, this)">
-                                                    Turn In Now
-                                                </button>
+                                                @if($isQuizActivity)
+                                                    <button class="btn rounded-pill px-4 py-2 fw-extrabold shadow-sm btn-ripple" style="background:linear-gradient(135deg,#7c3aed,#6366f1);color:#fff;" data-bs-toggle="modal" data-bs-target="#submitAssignmentModal{{ $activity->id }}" onclick="addRipple(event, this)">
+                                                        <i data-lucide="list-checks" size="16" class="me-2"></i> Start Quiz
+                                                    </button>
+                                                @else
+                                                    <button class="btn btn-primary rounded-pill px-4 py-2 fw-extrabold shadow-sm btn-ripple" data-bs-toggle="modal" data-bs-target="#submitAssignmentModal{{ $activity->id }}" onclick="addRipple(event, this)">
+                                                        Turn In Now
+                                                    </button>
+                                                @endif
                                             @endif
                                         @endif
                                     </div>
@@ -414,7 +449,7 @@
                                     </form>
                                 </div>
                                 
-                                @push('modals')
+                                @push('body_modals')
                                     @if(isset($activity->due_date))
                                         @include('courses.partials.submission_modal')
                                         @if(auth()->id() === $classroom->teacher_id)
@@ -431,11 +466,11 @@
                             <p class="text-muted">The stream is quiet... for now.</p>
                         </div>
                     @endforelse
-                </div>
             </div>
         </div>
+    </div>
 
-        <div class="tab-pane fade" id="members">
+    <div class="tab-pane fade" id="students">
             <div class="max-width-800 mx-auto mt-5">
                 <section class="mb-5">
                     <div class="d-flex justify-content-between align-items-center border-bottom border-primary border-3 pb-3 mb-4">
@@ -468,7 +503,7 @@
                                 <form action="{{ route('courses.kick', [$classroom, $student]) }}" method="POST" id="kick-form-{{ $student->id }}">
                                     @csrf
                                     <button type="button" class="btn btn-outline-danger rounded-circle p-2 transition-all" 
-                                            onclick="kickMember('{{ $student->id }}', '{{ addslashes($student->name) }}')">
+                                             onclick="kickStudent('{{ $student->id }}', '{{ addslashes($student->name) }}')">
                                         <i data-lucide="user-minus" size="18"></i>
                                     </button>
                                 </form>
@@ -534,7 +569,6 @@
         @csrf
     </form>
 
-    @include('courses.partials.modals')
 
     <script>
         function toggleComments(id) {
@@ -545,7 +579,11 @@
 
         let currentEditDz = null;
         function editActivity(id, type, files) {
-            const modalId = type === 'assignment' ? '#editAssignmentModal' : '#editMaterialModal';
+            if (type === 'assignment') {
+                window.location.href = `/classes/{{ $classroom->id }}/assignments/${id}/edit`;
+                return;
+            }
+            const modalId = '#editMaterialModal';
             const modalEl = document.querySelector(modalId);
             const modal = new bootstrap.Modal(modalEl);
             const form = modalEl.querySelector('form');
@@ -807,9 +845,9 @@
             });
         });
 
-        function kickMember(studentId, studentName) {
+        function kickStudent(studentId, studentName) {
             showConfirm({
-                title: 'Kick Member', message: 'Apakah anda yakin ingin menendang ' + studentName + '?', btnText: 'Yes, Kick Member', btnClass: 'btn-danger',
+                title: 'Kick Student', message: 'Apakah anda yakin ingin menendang ' + studentName + '?', btnText: 'Yes, Kick Student', btnClass: 'btn-danger',
                 onConfirm: () => { document.getElementById(`kick-form-${studentId}`).submit(); }
             });
         }
@@ -848,7 +886,12 @@
         .bg-glass-luxury { background: rgba(255, 255, 255, 0.15); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.2); color: white; }
         .bg-primary-soft { background: rgba(var(--primary-rgb), 0.1); }
         .bg-success-soft { background: rgba(16, 185, 129, 0.1); }
+        .bg-purple-soft { background: rgba(139, 92, 246, 0.1); }
+        .text-purple { color: #7c3aed !important; }
         .dz-luxury.dropzone { background: var(--bg-color) !important; border: 2px dashed var(--border-color) !important; border-radius: 16px !important; min-height: 120px !important; }
     </style>
-    @stack('modals')
 @endsection
+
+@push('body_modals')
+    @include('courses.partials.modals')
+@endpush

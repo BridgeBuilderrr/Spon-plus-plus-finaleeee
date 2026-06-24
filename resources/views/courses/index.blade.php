@@ -174,7 +174,6 @@
         </div>
     @endif
 
-    @include('courses.partials.modals_create_join')
 
     <script>
         function setView(view) {
@@ -318,3 +317,8 @@
         .uppercase { text-transform: uppercase; }
     </style>
 @endsection
+
+@push('body_modals')
+    @include('courses.partials.modals_create_join')
+@endpush
+
