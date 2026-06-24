@@ -1,5 +1,4 @@
 <script>
-    // Shared Spon++ Quiz Builder Script Engine
     let questionCount = 0;
 
     window.addQuestionField = function(data = null) {
@@ -155,7 +154,7 @@
         const newOptIdx = optRows.length;
         
         const row = document.createElement('div');
-        row.className = 'input-group option-row align-items-center mb-2';
+        row.className = 'd-flex option-row align-items-center mb-2 gap-3';
         
         const isChecked = isCorrect ? 'checked' : '';
         
@@ -169,10 +168,10 @@
                     </svg>
                 </span>
                 <span class="d-flex align-items-center px-1">
-                    <input type="checkbox" name="questions[${qIndex}][correct][]" value="${newOptIdx}" ${isChecked} class="form-check-input opt-correct-input" style="width:1.1em;height:1.1em;">
+                    <input type="checkbox" name="questions[${qIndex}][correct][]" value="${newOptIdx}" ${isChecked} class="form-check-input opt-correct-input" style="width:1.1em;height:1.1em;margin-top:0;">
                 </span>
-                <input type="text" name="questions[${qIndex}][options][${newOptIdx}]" class="form-control border p-2" placeholder="Option ${newOptIdx + 1}" value="${text}" required>
-                <button type="button" class="btn btn-outline-danger btn-remove-option" onclick="window.removeOptionField(${qIndex}, this)">
+                <input type="text" name="questions[${qIndex}][options][${newOptIdx}]" class="form-control border rounded-3 p-2 flex-grow-1" placeholder="Option ${newOptIdx + 1}" value="${text}" required>
+                <button type="button" class="btn btn-outline-danger btn-remove-option rounded-3" onclick="window.removeOptionField(${qIndex}, this)">
                     <i data-lucide="trash-2" size="16"></i>
                 </button>
             `;
@@ -186,10 +185,10 @@
                     </svg>
                 </span>
                 <span class="d-flex align-items-center px-1">
-                    <input type="radio" name="questions[${qIndex}][correct]" value="${newOptIdx}" ${isChecked} class="form-check-input opt-correct-input" style="width:1.1em;height:1.1em;">
+                    <input type="radio" name="questions[${qIndex}][correct]" value="${newOptIdx}" ${isChecked} class="form-check-input opt-correct-input" style="width:1.1em;height:1.1em;margin-top:0;">
                 </span>
-                <input type="text" name="questions[${qIndex}][options][${newOptIdx}]" class="form-control border p-2" placeholder="Option ${newOptIdx + 1}" value="${text}" required>
-                <button type="button" class="btn btn-outline-danger btn-remove-option" onclick="window.removeOptionField(${qIndex}, this)">
+                <input type="text" name="questions[${qIndex}][options][${newOptIdx}]" class="form-control border rounded-3 p-2 flex-grow-1" placeholder="Option ${newOptIdx + 1}" value="${text}" required>
+                <button type="button" class="btn btn-outline-danger btn-remove-option rounded-3" onclick="window.removeOptionField(${qIndex}, this)">
                     <i data-lucide="trash-2" size="16"></i>
                 </button>
             `;
